@@ -47,7 +47,8 @@ else
     exit 1
 fi
 
-export DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1224}"
+#export DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1224}"
+export DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-rocm/sgl-dev:sglang-0.5.8-rocm700-mi35x-mori-0210}"
 if test -z "${DOCKER_IMAGE_NAME}"; then
   echo "Error: DOCKER_IMAGE_NAME is not set or empty."
   exit 1

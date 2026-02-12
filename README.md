@@ -6,7 +6,7 @@
 # Allocate two node 28/29
 ./alloc_2.sh
 
-# Launch 1P1D. Still pending to network connection
+# Launch 1P1D. model is loaded on prefill and decode node.
 ./run_interactive_disagg.sh
 
 ```
