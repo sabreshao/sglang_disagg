@@ -50,13 +50,13 @@ if [[ -n "${MORI_RDMA_TC}" ]]; then
     echo "MORI_RDMA_TC is set to: $MORI_RDMA_TC"
 
     if [[ "$MORI_RDMA_TC" -eq 104 ]]; then
-        if [[ "$host_name" != mia1* && "$host_name" != node* ]]; then
+        if [[ "$host_name" != mia1* ]]; then
             echo "ERROR: MORI_RDMA_TC=104 should be applied on Node with prefix 'mia' but Host '$host_name' does not comply "
             exit 1
         fi
         echo "Host '$host_name' has been configured with MORI_RDMA_TC=104"
     elif [[ "$MORI_RDMA_TC" -eq 96 ]]; then
-        if [[ "$host_name" == GPU* || "$host_name" == smci355-ccs-aus* ]]; then
+        if [[ "$host_name" == GPU* || "$host_name" == smci355-ccs-aus* || "$host_name" == node* ]]; then
             echo "MORI_RDMA_TC compliance check pass.. "
         else
             echo "ERROR: MORI_RDMA_TC=96 should be applied on Node with prefix 'GPU' or 'smci355-ccs-aus' but Host '$host_name' does not comply "
@@ -127,11 +127,11 @@ declare -A MODEL_PREFILL_CONFIGS=(
 # Decode-specific configurations
 # Set parameters based on DP enable status
 if [[ "$DECODE_ENABLE_DP" == "true" ]]; then
-    decode_cuda_graph_bs=($(seq 1 160))
+    decode_cuda_graph_bs=($(seq 1 32))
     decode_max_running_requests=4096
     decode_chunked_prefill_size=$((MORI_MAX_DISPATCH_TOKENS_DECODE * DECODE_TP_SIZE))
 else
-    decode_cuda_graph_bs=($(seq 1 256))
+    decode_cuda_graph_bs=($(seq 1 32))
     decode_max_running_requests=256
     decode_chunked_prefill_size=262144
 fi
@@ -270,6 +270,12 @@ DECODE_SERVER_CONFIG=$(build_server_config "decode" "$MODEL_NAME" "$DECODE_TP_SI
 if [[ -n "$MODEL_NAME" ]]; then
     echo "Using model-specific configuration for: $MODEL_NAME"
 fi
+
+# Update ainic driver
+echo "Update ainic driver for vtr"
+apt -y remove libionic1
+dpkg -i /opt/amd/ainic/deb-repo/libionic1_54.0-149.g3304be71_amd64.deb
+ibv_devices | wc
 
 # =============================================================================
 # Container Synchronization

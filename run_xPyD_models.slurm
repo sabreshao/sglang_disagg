@@ -236,15 +236,16 @@ echo ""
 # Node information
 USER_NAME=$(whoami)
 MASTER_NODE=$(echo "$SELECTED_NODES" | head -n 1)
-NODE0_ADDR=$(srun --nodes=1 --ntasks=1 --time=00:20:00 --nodelist="$MASTER_NODE" bash -c 'ip route get 10.2.224.12')
-NODE0_ADDR=$(echo "$NODE0_ADDR" | awk '/src/ {print $7}')
+NODE0_ADDR=$(srun --nodes=1 --ntasks=1 --time=00:20:00 --nodelist="$MASTER_NODE" bash -c 'ip route get 10.2.224.0')
+NODE0_ADDR=$(echo "$NODE0_ADDR" | awk '/src/ {print $5}')
 
 IPS=()
 
 GW_NIC=enp193s0f1np1
 for NODE in $SELECTED_NODES; do
-    IP=$(srun --nodes=1 --ntasks=1 --time=00:20:00 --nodelist="$NODE" bash -c 'ip route get 10.2.224.12')
-    IP=$(echo "$IP" | awk '/src/ {print $7}')
+    IP=$(srun --nodes=1 --ntasks=1 --time=00:20:00 --nodelist="$NODE" bash -c 'ip route get 10.2.224.0')
+    IP=$(echo "$IP" | awk '/src/ {print $5}')
+    echo "$NODE $IP"
     IPS+=("$IP")
 done
 
@@ -365,6 +366,7 @@ exec sudo docker run --rm \
     -v ${MODEL_DIR}:/models \
     -v \$HOME/.ssh:/root/.ssh \
     -v $(which nicctl):/usr/sbin/nicctl \
+    -v /mnt/nfs/:/mnt/nfs/ -v /opt/amd:/opt/amd \
     --shm-size 128G \
     -v /tmp:/run_logs \
     -v ${DI_REPO_DIR}:${SGL_WS_PATH} \
