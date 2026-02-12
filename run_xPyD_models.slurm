@@ -235,14 +235,14 @@ echo ""
 # Node information
 USER_NAME=$(whoami)
 MASTER_NODE=$(echo "$SELECTED_NODES" | head -n 1)
-NODE0_ADDR=$(srun --nodes=1 --ntasks=1 --time=00:20:00 --nodelist="$MASTER_NODE" bash -c 'ip route get 1.1.1.1')
+NODE0_ADDR=$(srun --nodes=1 --ntasks=1 --time=00:20:00 --nodelist="$MASTER_NODE" bash -c 'ip route get 10.2.224.12')
 NODE0_ADDR=$(echo "$NODE0_ADDR" | awk '/src/ {print $7}')
 
 IPS=()
 
-GW_NIC=$(ip route | awk '/^default/ {print $5; exit}')
+GW_NIC=enp193s0f1np1
 for NODE in $SELECTED_NODES; do
-    IP=$(srun --nodes=1 --ntasks=1 --time=00:20:00 --nodelist="$NODE" bash -c 'ip route get 1.1.1.1')
+    IP=$(srun --nodes=1 --ntasks=1 --time=00:20:00 --nodelist="$NODE" bash -c 'ip route get 10.2.224.12')
     IP=$(echo "$IP" | awk '/src/ {print $7}')
     IPS+=("$IP")
 done
