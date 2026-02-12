@@ -3,6 +3,9 @@
 
 ## Verified recipe
 ```
+# Configure AINIC on each node bare metal
+./enable_dcqcn.sh && ./qos.sh
+
 # Allocate two node 28/29
 ./alloc_2.sh
 
