@@ -1,5 +1,19 @@
 # AMD InferenceMAX Distributed Inference MI355X Recipe
 
+
+## Verified recipe
+```
+# Allocate two node 28/29
+./alloc_2.sh
+
+# Launch 1P1D. Still pending to network connection
+./run_interactive_disagg.sh
+
+```
+
+
+
+
 ## List of Models - supported in this recipe, more models support are coming 
 
 - DeepSeek-V3 (https://huggingface.co/deepseek-ai/DeepSeek-V3)

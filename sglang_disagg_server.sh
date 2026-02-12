@@ -50,7 +50,7 @@ if [[ -n "${MORI_RDMA_TC}" ]]; then
     echo "MORI_RDMA_TC is set to: $MORI_RDMA_TC"
 
     if [[ "$MORI_RDMA_TC" -eq 104 ]]; then
-        if [[ "$host_name" != mia1* ]]; then
+        if [[ "$host_name" != mia1* && "$host_name" != node* ]]; then
             echo "ERROR: MORI_RDMA_TC=104 should be applied on Node with prefix 'mia' but Host '$host_name' does not comply "
             exit 1
         fi
