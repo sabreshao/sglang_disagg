@@ -12,6 +12,13 @@
 # Launch 1P1D. model is loaded on prefill and decode node.
 ./run_interactive_disagg.sh
 
+# Check log.
+All logs are in /tmp/slurm_job-$SLURM_JOBID /tmp/slurm_job-$SLURM_JOB_ID
+
+# Check nic.
+sudo nicctl show version host-software
+sudo nicctl show version firmware
+
 ```
 
 
