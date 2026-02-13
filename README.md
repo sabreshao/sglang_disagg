@@ -9,7 +9,7 @@
 # Allocate two node 28/29
 ./alloc_2.sh
 
-# Launch 1P1D. model is loaded on prefill and decode node.
+# Launch 1P1D. inference benchmark can run but very slow.
 ./run_interactive_disagg.sh
 
 # Check log.

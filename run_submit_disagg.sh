@@ -25,10 +25,10 @@ export TIME_LIMIT="24:00:00"
 export MODEL_PATH="/apps/data/models"
 export MODEL_NAME="DeepSeek-R1"
 export CONTAINER_IMAGE="rocm/pytorch-private:sglang-0.5.8-rocm700-mi35x-mori-0208-tuned"
-export PREFILL_NODES=1
-export PREFILL_WORKERS=1
-export DECODE_NODES=1
-export DECODE_WORKERS=1
+export PREFILL_NODES=2
+export PREFILL_WORKERS=2
+export DECODE_NODES=2
+export DECODE_WORKERS=2
 export ISL=1024
 export OSL=1024
 export CONCURRENCIES=512
@@ -40,7 +40,7 @@ export DECODE_ENABLE_DP=true
 export DECODE_MTP_SIZE=1
 export BENCH_RANDOM_RANGE_RATIO=0.8
 export RUNNER_NAME="debug_job"
-export NODE_LIST="node28,node29"
+export NODE_LIST="node28,node31"
 
 JOB_ID=$(bash submit_disagg.sh \
     $PREFILL_NODES $PREFILL_WORKERS $DECODE_NODES $DECODE_WORKERS \
