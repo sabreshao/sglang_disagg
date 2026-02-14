@@ -9,8 +9,11 @@
 # Allocate two node 28/29
 ./alloc_2.sh
 
-# Launch 1P1D. inference benchmark can run but very slow.
+# Launch 1P1D DeepSeek-R1. inference benchmark can run but very slow.
 ./run_interactive_disagg.sh
+
+# Launch 1P1D Qwen3-235B. inference benchmark can run but very slow.
+./run_interactive_disagg_qwen3.sh
 
 # Check log.
 All logs are in /tmp/slurm_job-$SLURM_JOBID /tmp/slurm_job-$SLURM_JOB_ID
