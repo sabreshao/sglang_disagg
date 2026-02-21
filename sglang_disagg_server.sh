@@ -32,6 +32,7 @@ BENCH_RANDOM_RANGE_RATIO="${BENCH_RANDOM_RANGE_RATIO:-1}"
 BENCH_REQUEST_RATE="${BENCH_REQUEST_RATE:-inf}"
 BENCH_NUM_PROMPTS_MULTIPLIER="${BENCH_NUM_PROMPTS_MULTIPLIER:-10}"
 BENCH_MAX_CONCURRENCY="${BENCH_MAX_CONCURRENCY:-512}"
+LOAD_DUMMY="${LOAD_DUMMY:-"0"}"
 
 # Dry Run for debugging purpose
 DRY_RUN="${DRY_RUN:-0}"
@@ -118,6 +119,14 @@ else
     prefill_cuda_graph_bs=($(seq 1 128))
     prefill_max_running_requests=128
     prefill_chunked_prefill_size=262144
+fi
+
+# Skip model loading if requested
+if [[ "$LOAD_DUMMY" == "1" ]]; then
+    LOAD_DUMMY_MODEL="--load-format dummy"
+    echo "skip model loading"
+else
+    LOAD_DUMMY_MODEL=""
 fi
 
 declare -A MODEL_PREFILL_CONFIGS=(
@@ -324,6 +333,7 @@ if [ "$NODE_RANK" -eq 0 ]; then
     # start the head prefill server
     PREFILL_CMD="SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${MORI_MAX_DISPATCH_TOKENS_PREFILL} python3 -m sglang.launch_server \
         --model-path $MODEL_DIR/$MODEL_NAME \
+        ${LOAD_DUMMY_MODEL} \
         --disaggregation-mode prefill \
         --disaggregation-ib-device ${IBDEVICES} \
         --host 0.0.0.0 \
@@ -450,6 +460,7 @@ elif [ "$NODE_RANK" -gt 0 ] && [ "$NODE_RANK" -lt "$NODE_OFFSET" ]; then
 
     PREFILL_CMD="SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${MORI_MAX_DISPATCH_TOKENS_PREFILL} python3 -m sglang.launch_server \
         --model-path $MODEL_DIR/${MODEL_NAME} \
+        ${LOAD_DUMMY_MODEL} \
         --disaggregation-mode prefill \
         --disaggregation-ib-device ${IBDEVICES} \
         --host 0.0.0.0 \
@@ -512,6 +523,7 @@ else
 
     DECODE_CMD="SGLANG_MORI_NUM_MAX_DISPATCH_TOKENS_PER_RANK=${MORI_MAX_DISPATCH_TOKENS_DECODE} python3 -m sglang.launch_server \
         --model-path ${MODEL_DIR}/${MODEL_NAME} \
+        ${LOAD_DUMMY_MODEL} \
         --disaggregation-mode decode \
         --disaggregation-ib-device ${IBDEVICES} \
         --host 0.0.0.0 \

@@ -36,5 +36,6 @@ export BENCH_OUTPUT_LEN=1024
 export BENCH_RANDOM_RANGE_RATIO=1
 export BENCH_NUM_PROMPTS_MULTIPLIER=10
 export BENCH_MAX_CONCURRENCY=32
+export LOAD_DUMMY=1
 
 bash run_xPyD_models.slurm 2>&1 | tee log_${MODEL_NAME}_xP${xP}_yD${yD}.log

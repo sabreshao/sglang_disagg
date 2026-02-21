@@ -40,7 +40,7 @@ export DECODE_ENABLE_DP=true
 export DECODE_MTP_SIZE=1
 export BENCH_RANDOM_RANGE_RATIO=0.8
 export RUNNER_NAME="debug_job"
-export NODE_LIST="node28,node31"
+export NODE_LIST="node02,node04"
 
 JOB_ID=$(bash submit_disagg.sh \
     $PREFILL_NODES $PREFILL_WORKERS $DECODE_NODES $DECODE_WORKERS \

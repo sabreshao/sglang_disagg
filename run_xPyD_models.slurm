@@ -81,6 +81,7 @@ BENCH_MAX_CONCURRENCY="${BENCH_MAX_CONCURRENCY:-512}"
 
 MODEL_NAME="${MODEL_NAME:-None}"
 MODEL_DIR="${MODEL_DIR:-"/nfsdata"}"
+LOAD_DUMMY="${LOAD_DUMMY:-"0"}"
 
 validate_model_name() {
   local is_valid_model=false
@@ -379,6 +380,7 @@ exec sudo docker run --rm \
     -e NODE_RANK=\$SLURM_PROCID \
     -e NODE0_ADDR=\$NODE0_ADDR \
     -e MODEL_DIR=/models \
+    -e LOAD_DUMMY=\$LOAD_DUMMY \
     -e SGL_WS_PATH=${SGL_WS_PATH} \
     -e xP=\$xP \
     -e yD=\$yD \
