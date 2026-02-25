@@ -342,7 +342,7 @@ if [ "$NODE_RANK" -eq 0 ]; then
         ${PREFILL_SERVER_CONFIG}"
 
     if [ "$PREFILL_NODES_PER_WORKER" -gt 1 ]; then
-        PREFILL_CMD="$PREFILL_CMD --dist-init-addr ${PREFILL_HEADNODE_URLS[0]} --nnodes ${$PREFILL_NODES_PER_WORKER} --node-rank 0"
+        PREFILL_CMD="$PREFILL_CMD --dist-init-addr ${PREFILL_HEADNODE_URLS[0]} --nnodes ${PREFILL_NODES_PER_WORKER} --node-rank 0"
     fi
 
 
@@ -471,7 +471,7 @@ elif [ "$NODE_RANK" -gt 0 ] && [ "$NODE_RANK" -lt "$NODE_OFFSET" ]; then
     if [ "$PREFILL_NODES_PER_WORKER" -gt 1 ]; then
         rank=$((NODE_RANK % PREFILL_NODES_PER_WORKER))
         prefill_idx=$((NODE_RANK / PREFILL_NODES_PER_WORKER))
-        PREFILL_CMD="$PREFILL_CMD --dist-init-addr ${PREFILL_HEADNODE_URLS[$prefill_idx]} --nnodes ${$PREFILL_NODES_PER_WORKER} --node-rank $rank"
+        PREFILL_CMD="$PREFILL_CMD --dist-init-addr ${PREFILL_HEADNODE_URLS[0]} --nnodes ${PREFILL_NODES_PER_WORKER} --node-rank $rank"
     fi
 
     if [[ "$DRY_RUN" -eq 1 ]]; then
