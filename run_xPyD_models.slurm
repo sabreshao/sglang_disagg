@@ -82,6 +82,7 @@ BENCH_MAX_CONCURRENCY="${BENCH_MAX_CONCURRENCY:-512}"
 MODEL_NAME="${MODEL_NAME:-None}"
 MODEL_DIR="${MODEL_DIR:-"/nfsdata"}"
 LOAD_DUMMY="${LOAD_DUMMY:-"0"}"
+SGLANG_DIR="${SGLANG_DIR:-""}"
 
 validate_model_name() {
   local is_valid_model=false
@@ -169,6 +170,15 @@ echo "Final MODEL_PATH: $MODEL_PATH"
 echo ""
 
 NUM_NODES="${NUM_NODES}"
+
+
+if [[ -z "${SGLANG_DIR}" ]]; then
+    echo "Using internal sglang"
+    SGLANG_MAP=" "
+else
+    echo "Using external sglang"
+    SGLANG_MAP="-v ${SGLANG_DIR}:/sgl-workspace/sglang "
+fi
 
 # ------------------------
 # Extract first NUM_NODES from SLURM allocation and update SLURM variables
@@ -338,6 +348,7 @@ srun \
   bash -lc "
 set -euo pipefail
 
+
 echo \"Rank \$SLURM_PROCID on \$(hostname)\"
 
 # Pre-clean (idempotent)
@@ -371,6 +382,7 @@ exec sudo docker run --rm \
     -v \$HOME/.ssh:/root/.ssh \
     -v $(which nicctl):/usr/sbin/nicctl \
     -v /mnt/nfs/:/mnt/nfs/ -v /opt/amd:/opt/amd \
+    ${SGLANG_MAP} \
     --shm-size 128G \
     -v /tmp:/run_logs \
     -v ${DI_REPO_DIR}:${SGL_WS_PATH} \
