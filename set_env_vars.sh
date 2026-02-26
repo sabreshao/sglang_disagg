@@ -44,6 +44,7 @@ else
     echo "[Error] unable to fetch the hostname"
     exit 1
 fi
+export SGLANG_HOST_IP=$(ip -4 addr show dev ${GLOO_SOCKET_IFNAME} | awk '/inet / {print $2}' | cut -d/ -f1)
 set +x
 
 
@@ -60,6 +61,7 @@ export SGLANG_DISAGGREGATION_BOOTSTRAP_TIMEOUT=1200
 export SGLANG_DISAGGREGATION_WAITING_TIMEOUT=1200
 
 # disable alloc the memory in one pass
+export MORI_SHMEM_HEAP_SIZE=32G
 export MORI_SHMEM_MODE=ISOLATION
 export SGLANG_MORI_FP8_DISP=True
 export MORI_EP_LAUNCH_CONFIG_MODE=AUTO

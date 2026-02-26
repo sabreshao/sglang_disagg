@@ -43,7 +43,7 @@ DRY_RUN="${DRY_RUN:-0}"
 # =============================================================================
 source $SGL_WS_PATH/set_env_vars.sh
 
-host_ip=$(ip route get 10.2.224.12 | awk '/src/ {print $7}')
+host_ip=$SGLANG_HOST_IP
 host_name=$(hostname)
 
 # Validate MORI_RDMA_TC and hostname consistency
