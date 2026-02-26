@@ -354,8 +354,8 @@ echo \"Rank \$SLURM_PROCID on \$(hostname)\"
 
 # Pre-clean (idempotent)
 sudo docker ps -aq --filter \"name=^container_sbatch_\" | xargs -r sudo docker rm -f || true
-if [[ "$DRY_RUN" -eq 1 ]]; then
-    echo "Dry run, don't stop other dockers"
+if [[ $DRY_RUN -eq 1 ]]; then
+    echo \"Dry run, do not stop other dockers\"
 else
     sudo docker ps -aq | xargs -r sudo docker stop || true
 fi
