@@ -285,11 +285,15 @@ if [[ -n "$MODEL_NAME" ]]; then
     echo "Using model-specific configuration for: $MODEL_NAME"
 fi
 
-# Update ainic driver
-echo "Update ainic driver for vtr"
-apt -y remove libionic1
-dpkg -i /opt/amd/ainic/deb-repo/libionic1_54.0-149.g3304be71_amd64.deb
-ibv_devices | wc
+if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "Skip driver update in dry run mode"
+else
+    # Update ainic driver
+    echo "Update ainic driver for vtr"
+    apt -y remove libionic1
+    dpkg -i /opt/amd/ainic/deb-repo/libionic1_54.0-149.g3304be71_amd64.deb
+    ibv_devices | wc
+fi
 
 # =============================================================================
 # Container Synchronization
