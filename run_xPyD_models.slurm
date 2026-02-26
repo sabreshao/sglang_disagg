@@ -9,6 +9,7 @@
 #SBATCH --output="slurm_job-%j.out"
 #SBATCH --error="slurm_job-%j.err"
 
+DRY_RUN="${DRY_RUN:-0}"
 
 # ------------------------
 # Print current time in UTC and PST formats
@@ -353,7 +354,11 @@ echo \"Rank \$SLURM_PROCID on \$(hostname)\"
 
 # Pre-clean (idempotent)
 sudo docker ps -aq --filter \"name=^container_sbatch_\" | xargs -r sudo docker rm -f || true
-sudo docker ps -aq | xargs -r sudo docker stop || true
+if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "Dry run, don't stop other dockers"
+else
+    sudo docker ps -aq | xargs -r sudo docker stop || true
+fi
 
 exec sudo docker run --rm \
     --init \
@@ -396,6 +401,7 @@ exec sudo docker run --rm \
     -e SGL_WS_PATH=${SGL_WS_PATH} \
     -e xP=\$xP \
     -e yD=\$yD \
+    -e DRY_RUN=\$DRY_RUN \
     -e MODEL_NAME=\$MODEL_NAME \
     -e IPADDRS=\$IPADDRS \
     -e PREFILL_TP_SIZE=\$PREFILL_TP_SIZE \
