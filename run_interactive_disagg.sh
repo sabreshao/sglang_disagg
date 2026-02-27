@@ -21,10 +21,10 @@
 
 export xP=1
 export yD=1
-export NUM_NODES=2
+export NUM_NODES=3
 export MODEL_NAME=DeepSeek-R1
 export MODEL_DIR="/mnt/nfs/RAID/shared/huggingface/hub/"
-export PREFILL_TP_SIZE=8
+export PREFILL_TP_SIZE=16
 export PREFILL_ENABLE_EP=true
 export PREFILL_ENABLE_DP=true
 export DECODE_TP_SIZE=8
@@ -36,7 +36,7 @@ export BENCH_OUTPUT_LEN=1024
 export BENCH_RANDOM_RANGE_RATIO=1
 export BENCH_NUM_PROMPTS_MULTIPLIER=10
 export BENCH_MAX_CONCURRENCY=32
-export LOAD_DUMMY=1
+export LOAD_DUMMY=0
 #export SGLANG_DIR=/mnt/nfs/sashao/workspace/dist_inference/sglang
 export DRY_RUN=0
 
