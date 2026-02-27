@@ -134,7 +134,7 @@ declare -A MODEL_PREFILL_CONFIGS=(
     ["DeepSeek-V3-0324"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]} --disable-radix-cache"
     ["DeepSeek-R1"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs[*]} --disable-radix-cache"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]} --disable-radix-cache"
-    ["Qwen3-235B"]="--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]} --disable-radix-cache"
+    ["Qwen3-235B"]="--mem-fraction-static 0.34 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size 16384  --cuda-graph-bs ${prefill_cuda_graph_bs[*]} --disable-radix-cache"
 )
 
 # Decode-specific configurations
@@ -156,7 +156,7 @@ declare -A MODEL_DECODE_CONFIGS=(
     ["DeepSeek-V3-0324"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
     ["DeepSeek-R1"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
-    ["Qwen3-235B"]="--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
+    ["Qwen3-235B"]="--mem-fraction-static 0.34 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs[*]} --prefill-round-robin-balance"
 )
 
 
@@ -285,15 +285,15 @@ if [[ -n "$MODEL_NAME" ]]; then
     echo "Using model-specific configuration for: $MODEL_NAME"
 fi
 
-if [[ "$DRY_RUN" -eq 1 ]]; then
-    echo "Skip driver update in dry run mode"
-else
-    # Update ainic driver
-    echo "Update ainic driver for vtr"
-    apt -y remove libionic1
-    dpkg -i /opt/amd/ainic/deb-repo/libionic1_54.0-149.g3304be71_amd64.deb
-    ibv_devices | wc
-fi
+#if [[ "$DRY_RUN" -eq 1 ]]; then
+#    echo "Skip driver update in dry run mode"
+#else
+#    # Update ainic driver
+#    echo "Update ainic driver for vtr"
+#    apt -y remove libionic1
+#    dpkg -i /opt/amd/ainic/deb-repo/libionic1_54.0-149.g3304be71_amd64.deb
+#    ibv_devices | wc
+#fi
 
 # =============================================================================
 # Container Synchronization
