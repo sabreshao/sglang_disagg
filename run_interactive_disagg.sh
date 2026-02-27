@@ -38,5 +38,6 @@ export BENCH_NUM_PROMPTS_MULTIPLIER=10
 export BENCH_MAX_CONCURRENCY=32
 export LOAD_DUMMY=1
 #export SGLANG_DIR=/mnt/nfs/sashao/workspace/dist_inference/sglang
+export DRY_RUN=0
 
 bash run_xPyD_models.slurm 2>&1 | tee log_${MODEL_NAME}_xP${xP}_yD${yD}.log
