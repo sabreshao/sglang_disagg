@@ -21,13 +21,13 @@
 
 export xP=1
 export yD=1
-export NUM_NODES=3
+export NUM_NODES=4
 export MODEL_NAME=DeepSeek-R1
 export MODEL_DIR="/mnt/nfs/RAID/shared/huggingface/hub/"
 export PREFILL_TP_SIZE=16
 export PREFILL_ENABLE_EP=true
 export PREFILL_ENABLE_DP=true
-export DECODE_TP_SIZE=8
+export DECODE_TP_SIZE=16
 export DECODE_ENABLE_EP=true
 export DECODE_ENABLE_DP=true
 export DECODE_MTP_SIZE=0
