@@ -84,7 +84,7 @@ declare -A MODEL_BASE_CONFIGS=(
     ["DeepSeek-V3-0324"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
     ["DeepSeek-R1"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm static --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
     ["DeepSeek-R1-0528-MXFP4-Preview"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter"
-    ["Qwen3-235B"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm fake --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+    ["Qwen3-235B"]="--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm static --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
 )
 
 
