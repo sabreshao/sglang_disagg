@@ -8,7 +8,7 @@ echo "[$(date)] Starting slow_down..."
 echo "will send slow_down request to DECODE_HEAD_NODE($DECODE_HEAD_NODE)"
 curl -H "Content-Type: application/json" \
     -d "{\"forward_sleep_time\": 180}" \
-    -X POST "http://$DECODE_HEAD_NODE:30003/slow_down"
+    -X POST "http://$DECODE_HEAD_NODE:8000/slow_down"
 echo "slow_down request sent successfully"
 
 # --- benchmark ---
@@ -34,7 +34,7 @@ echo "[$(date)] Launching benchmark in background, logging to $LOG_FILE..."
     python3 -m sglang.bench_one_batch_server \
         --dataset-path "$DATASET_FILE" \
         --model-path deepseek-ai/DeepSeek-R1-0528 \
-        --base-url http://$ROUTER_NODE:8000 \
+        --base-url http://$ROUTER_NODE:30000 \
         --batch-size 3200 \
         --input-len 1000 \
         --output-len 1000 \
@@ -51,7 +51,7 @@ echo "[$(date)] Stopping slow_down while benchmark is still running..."
 echo "will send slow_down request to DECODE_HEAD_NODE($DECODE_HEAD_NODE)"
 curl -H "Content-Type: application/json" \
     -d "{\"forward_sleep_time\": null}" \
-    -X POST "http://$DECODE_HEAD_NODE:30003/slow_down"
+    -X POST "http://$DECODE_HEAD_NODE:8000/slow_down"
 echo "slow_down request sent successfully"
 
 # --- wait for benchmark ---
