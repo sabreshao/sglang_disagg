@@ -21,13 +21,13 @@
 
 export xP=1
 export yD=1
-export NUM_NODES=4
+export NUM_NODES=5
 export MODEL_NAME=DeepSeek-R1
 export MODEL_DIR="/mnt/nfs/RAID/shared/huggingface/hub/"
-export PREFILL_TP_SIZE=16
+export PREFILL_TP_SIZE=8
 export PREFILL_ENABLE_EP=true
 export PREFILL_ENABLE_DP=true
-export DECODE_TP_SIZE=16
+export DECODE_TP_SIZE=32
 export DECODE_ENABLE_EP=true
 export DECODE_ENABLE_DP=true
 export DECODE_MTP_SIZE=0
@@ -39,5 +39,6 @@ export BENCH_MAX_CONCURRENCY=32
 export LOAD_DUMMY=0
 #export SGLANG_DIR=/mnt/nfs/sashao/workspace/dist_inference/sglang
 export DRY_RUN=0
+export DOCKER_IMAGE_NAME=rocm/sgl-dev:sglang-0.5.8-rocm700-mi35x-mori-0210
 
 bash run_xPyD_models.slurm 2>&1 | tee log_${MODEL_NAME}_xP${xP}_yD${yD}.log
