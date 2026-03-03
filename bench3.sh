@@ -1,7 +1,30 @@
 #!/bin/bash
 
+n_prefill=$1
+n_decode=$2
+prefill_gpus=$3
+decode_gpus=$4
+model_path=$5
+model_name=$6
+MODEL_PATH="${model_path}/${model_name}"
+log_path=$7
+
+chosen_isl=${8:-1024}
+chosen_osl=${9:-1024}
+concurrency_list=${10:-"512x1"}
+chosen_req_rate=${11:-1}
+random_range_ratio=${12:-0.8}
+num_prompts_multiplier=${13:-10}
+
+echo "Config ${chosen_isl}; ${chosen_osl}; ${chosen_concurrencies[0]}; ${chosen_req_rate}"
+
+head_node="localhost"
+head_port="30000"
+
+
 SLOWDOWN_DURATION=${SLOWDOWN_DURATION:-600}  # seconds before stopping slow_down (10 minutes)
 LOG_FILE="benchmark_$(date +%Y%m%d_%H%M%S).log"
+ROUTER_NODE=${ROUTER_NODE:-localhost}
 
 # --- start_slow_down ---
 echo "[$(date)] Starting slow_down..."
@@ -15,7 +38,6 @@ echo "slow_down request sent successfully"
 echo "[$(date)] Launching benchmark in background, logging to $LOG_FILE..."
 (
     echo "start benchmark in docker"
-    export ROUTER_NODE=$PREFILL_HEAD_NODE
     echo "make sure you have launched router on the ROUTER_NODE($ROUTER_NODE)"
 
     DATASET_DIR="${WORKSPACE}/../datasets"
@@ -33,7 +55,7 @@ echo "[$(date)] Launching benchmark in background, logging to $LOG_FILE..."
 
     python3 -m sglang.bench_one_batch_server \
         --dataset-path "$DATASET_FILE" \
-        --model-path deepseek-ai/DeepSeek-R1-0528 \
+        --model-path $MODEL_PATH \
         --base-url http://$ROUTER_NODE:30000 \
         --batch-size 3200 \
         --input-len 1000 \
