@@ -23,8 +23,7 @@ head_node="localhost"
 head_port="30000"
 
 
-SLOWDOWN_DURATION=${SLOWDOWN_DURATION:-600}  # seconds before stopping slow_down (10 minutes)
-LOG_FILE="benchmark_$(date +%Y%m%d_%H%M%S).log"
+SLOWDOWN_DURATION=${SLOWDOWN_DURATION:-60}  # seconds before stopping slow_down (10 minutes)
 ROUTER_NODE=${ROUTER_NODE:-localhost}
 
 # --- start_slow_down ---
@@ -36,7 +35,7 @@ curl -H "Content-Type: application/json" \
 echo "slow_down request sent successfully"
 
 # --- benchmark ---
-echo "[$(date)] Launching benchmark in background, logging to $LOG_FILE..."
+echo "[$(date)] Launching benchmark in background, output to console (captured by slurm)..."
 (
     echo "start benchmark in docker"
     echo "make sure you have launched router on the ROUTER_NODE($ROUTER_NODE)"
@@ -62,7 +61,7 @@ echo "[$(date)] Launching benchmark in background, logging to $LOG_FILE..."
         --input-len 1000 \
         --output-len 1000 \
         --skip-warmup
-) > "$LOG_FILE" 2>&1 &
+) &
 BENCHMARK_PID=$!
 echo "[$(date)] Benchmark running with PID $BENCHMARK_PID"
 
