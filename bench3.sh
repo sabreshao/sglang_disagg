@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 n_prefill=$1
 n_decode=$2
