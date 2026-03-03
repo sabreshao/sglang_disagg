@@ -23,14 +23,14 @@ head_node="localhost"
 head_port="30000"
 
 
-SLOWDOWN_DURATION=${SLOWDOWN_DURATION:-60}  # seconds before stopping slow_down (10 minutes)
+SLOWDOWN_DURATION=${SLOWDOWN_DURATION:-180}  # seconds before stopping slow_down (10 minutes)
 ROUTER_NODE=${ROUTER_NODE:-localhost}
 
 # --- start_slow_down ---
 echo "[$(date)] Starting slow_down..."
 echo "will send slow_down request to DECODE_HEAD_NODE($DECODE_HEAD_NODE)"
 curl -H "Content-Type: application/json" \
-    -d "{\"forward_sleep_time\": 180}" \
+    -d "{\"forward_sleep_time\": 90}" \
     -X POST "http://$DECODE_HEAD_NODE:8000/slow_down"
 echo "slow_down request sent successfully"
 
@@ -40,7 +40,7 @@ echo "[$(date)] Launching benchmark in background, output to console (captured b
     echo "start benchmark in docker"
     echo "make sure you have launched router on the ROUTER_NODE($ROUTER_NODE)"
 
-    DATASET_DIR="${WORKSPACE}/../datasets"
+    DATASET_DIR="/mnt/nfs/minchsun/dataset"
     DATASET_FILE="${DATASET_DIR}/ShareGPT_V3_unfiltered_cleaned_split.json"
 
     if [[ ! -f "$DATASET_FILE" ]]; then
@@ -53,11 +53,13 @@ echo "[$(date)] Launching benchmark in background, output to console (captured b
         echo "Using existing dataset file at $DATASET_FILE"
     fi
 
+    sed -i 's| + "/get_server_info"|.replace(":30000", ":8000") + "/get_server_info"|g' /sgl-workspace/sglang/python/sglang/test/bench_one_batch_server_internal.py
+
     python3 -m sglang.bench_one_batch_server \
         --dataset-path "$DATASET_FILE" \
         --model-path $MODEL_PATH \
         --base-url http://$ROUTER_NODE:30000 \
-        --batch-size 3200 \
+        --batch-size 24 \
         --input-len 1000 \
         --output-len 1000 \
         --skip-warmup
@@ -82,3 +84,6 @@ wait $BENCHMARK_PID
 BENCHMARK_EXIT=$?
 
 echo "[$(date)] Benchmark finished with exit code $BENCHMARK_EXIT"
+
+# PYTHONPATH=/sgl-workspace/sglang/python:$PYTHONPATH python3 -m sglang.bench_one_batch_server --dataset-path /mnt/nfs/minchsun/dataset/ShareGPT_V3_unfiltered_cleaned_split.json --model-path /models/DeepSeek-R1 \
+#     --base-url http://10.2.224.7:30000 --batch-size 24 --input-len 1000 --output-len 1000 --skip-warmup
