@@ -424,7 +424,7 @@ if [ "$NODE_RANK" -eq 0 ]; then
     else
         export IS_MTP=false
     fi
-    export DECODE_HEAD_NODE=${DECODE_HEADNODE_URLS[0]}
+    export DECODE_HEAD_NODE=${IP_ARRAY[$NODE_OFFSET]}
 
     # n_prefill n_decode prefill_gpus decode_gpus model_dir model_name log_path isl osl concurrency_list req_rate random_range_ratio num_prompts_multiplier
     BENCH_CMD="bash /sglang_disagg/bench2.sh ${xP} ${yD} $((PREFILL_TP_SIZE*xP)) $((DECODE_TP_SIZE*yD)) \
