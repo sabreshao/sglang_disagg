@@ -12,15 +12,15 @@ LOG_PATH=$7
 
 BENCH_INPUT_LEN=${8:-900}
 BENCH_OUTPUT_LEN=${9:-400}
-CONCURRENCY=${10:-1024}
+BATCH_SIZE=${10:-512}
 
-echo "Config input=${BENCH_INPUT_LEN} output=${BENCH_OUTPUT_LEN}; Concurrency=${CONCURRENCY}"
+echo "Config input=${BENCH_INPUT_LEN} output=${BENCH_OUTPUT_LEN}; Concurrency=${BATCH_SIZE}"
 
 head_node="localhost"
 head_port="30000"
 
 
-SLOWDOWN_DURATION=${SLOWDOWN_DURATION:-240}  # seconds before stopping slow_down (10 minutes)
+SLOWDOWN_DURATION=${SLOWDOWN_DURATION:-600}  # seconds before stopping slow_down (10 minutes)
 ROUTER_NODE=${ROUTER_NODE:-localhost}
 
 # --- start_slow_down ---
@@ -57,7 +57,7 @@ echo "[$(date)] Launching benchmark in background, output to console (captured b
         --dataset-path "$DATASET_FILE" \
         --model-path $MODEL_PATH \
         --base-url http://$ROUTER_NODE:30000 \
-        --batch-size $CONCURRENCY \
+        --batch-size $BATCH_SIZE \
         --input-len $BENCH_INPUT_LEN \
         --output-len $BENCH_OUTPUT_LEN \
         --skip-warmup
@@ -82,10 +82,3 @@ wait $BENCHMARK_PID
 BENCHMARK_EXIT=$?
 
 echo "[$(date)] Benchmark finished with exit code $BENCHMARK_EXIT"
-
-result=$(python3 $SGL_WS_PATH/parse_decode_log.py "$LOG_PATH" "$BENCH_OUTPUT_LEN" "$CONCURRENCY")
-tpot=$(echo "$result" | sed -n '1p')
-output_throughput=$(echo "$result" | sed -n '2p')
-
-echo "TPOT = $tpot ms"
-echo "Output throughput = $output_throughput tokens/s"

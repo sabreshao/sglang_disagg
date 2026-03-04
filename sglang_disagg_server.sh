@@ -609,6 +609,13 @@ else
         if [[ "$DRY_RUN" -eq 0 ]]; then
             cp /run_logs/slurm_job-${SLURM_JOB_ID}/* /sglang_disagg/logs/slurm_job-${SLURM_JOB_ID}/
         fi
+
+        result=$(python $SGL_WS_PATH/parse_decode_log.py "/run_logs/slurm_job-${SLURM_JOB_ID}/decode_NODE${NODE_RANK}.log" "$BENCH_OUTPUT_LEN" "$BENCH_MAX_CONCURRENCY")
+        tpot=$(echo "$result" | sed -n '1p')
+        output_throughput=$(echo "$result" | sed -n '2p')
+
+        echo "TPOT = $tpot ms"
+        echo "Output throughput = $output_throughput tokens/s"
     fi
 
 fi
