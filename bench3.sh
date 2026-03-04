@@ -23,7 +23,7 @@ head_node="localhost"
 head_port="30000"
 
 
-SLOWDOWN_DURATION=${SLOWDOWN_DURATION:-180}  # seconds before stopping slow_down (10 minutes)
+SLOWDOWN_DURATION=${SLOWDOWN_DURATION:-240}  # seconds before stopping slow_down (10 minutes)
 ROUTER_NODE=${ROUTER_NODE:-localhost}
 
 # --- start_slow_down ---
@@ -53,13 +53,14 @@ echo "[$(date)] Launching benchmark in background, output to console (captured b
         echo "Using existing dataset file at $DATASET_FILE"
     fi
 
-    sed -i 's| + "/get_server_info"|.replace(":30000", ":8000") + "/get_server_info"|g' /sgl-workspace/sglang/python/sglang/test/bench_one_batch_server_internal.py
+    #sed -i 's/dp_size = server_info\.get("dp_size", None) or 1/dp_size = internal_state[0].get("dp_size", None) or 1/' /sgl-workspace/sglang/python/sglang/test/bench_one_batch_server_internal.py
+    #sed -i 's| + "/get_server_info"|.replace(":30000", ":8000") + "/get_server_info"|g' /sgl-workspace/sglang/python/sglang/test/bench_one_batch_server_internal.py
 
     python3 -m sglang.bench_one_batch_server \
         --dataset-path "$DATASET_FILE" \
         --model-path $MODEL_PATH \
         --base-url http://$ROUTER_NODE:30000 \
-        --batch-size 24 \
+        --batch-size 1024 \
         --input-len 1000 \
         --output-len 1000 \
         --skip-warmup

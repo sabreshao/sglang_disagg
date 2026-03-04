@@ -74,6 +74,15 @@ else
 fi
 
 # =============================================================================
+# Update sglang repo
+# =============================================================================
+cd /sgl-workspace/sglang
+git remote add new-repo https://github.com/alexsun07/sglang.git
+git fetch new-repo amd_mori_0208
+git reset --hard new-repo/amd_mori_0208
+
+
+# =============================================================================
 # Model-Specific Configuration Maps
 # =============================================================================
 
@@ -113,7 +122,7 @@ declare -A MODEL_DP_CONFIGS=(
 # Set parameters based on DP enable status
 if [[ "$PREFILL_ENABLE_DP" == "true" ]]; then
     prefill_cuda_graph_bs=($(seq 1 3))
-    prefill_max_running_requests=24
+    prefill_max_running_requests=128
     prefill_chunked_prefill_size=$((MORI_MAX_DISPATCH_TOKENS_PREFILL * PREFILL_TP_SIZE))
 else
     prefill_cuda_graph_bs=($(seq 1 128))
@@ -140,7 +149,7 @@ declare -A MODEL_PREFILL_CONFIGS=(
 # Decode-specific configurations
 # Set parameters based on DP enable status
 if [[ "$DECODE_ENABLE_DP" == "true" ]]; then
-    decode_cuda_graph_bs=($(seq 1 32))
+    decode_cuda_graph_bs=($(seq 1 132))
     decode_max_running_requests=4096
     decode_chunked_prefill_size=$((MORI_MAX_DISPATCH_TOKENS_DECODE * DECODE_TP_SIZE))
 else
@@ -379,6 +388,7 @@ if [ "$NODE_RANK" -eq 0 ]; then
 
     ROUTER_CMD="python -m sglang_router.launch_router \
         --pd-disaggregation \
+        --mini-lb \
         --port 30000 \
         --policy random \
         --prefill-policy random \
@@ -400,7 +410,7 @@ if [ "$NODE_RANK" -eq 0 ]; then
         --node-ips ${NODE0_ADDR} \
         --node-ports 30000 \
         --wait-for-all-health \
-        --health-endpoint /readiness \
+        --health-endpoint /health \
         --timeout 1800"
 
         if [[ "$DRY_RUN" -eq 1 ]]; then
@@ -427,7 +437,7 @@ if [ "$NODE_RANK" -eq 0 ]; then
     export DECODE_HEAD_NODE=${IP_ARRAY[$NODE_OFFSET]}
 
     # n_prefill n_decode prefill_gpus decode_gpus model_dir model_name log_path isl osl concurrency_list req_rate random_range_ratio num_prompts_multiplier
-    BENCH_CMD="bash /sglang_disagg/bench2.sh ${xP} ${yD} $((PREFILL_TP_SIZE*xP)) $((DECODE_TP_SIZE*yD)) \
+    BENCH_CMD="bash /sglang_disagg/bench3.sh ${xP} ${yD} $((PREFILL_TP_SIZE*xP)) $((DECODE_TP_SIZE*yD)) \
         $MODEL_DIR $MODEL_NAME /run_logs/slurm_job-${SLURM_JOB_ID} ${BENCH_INPUT_LEN} \
         ${BENCH_OUTPUT_LEN} "${BENCH_MAX_CONCURRENCY}" ${BENCH_REQUEST_RATE} \
         ${BENCH_RANDOM_RANGE_RATIO} ${BENCH_NUM_PROMPTS_MULTIPLIER}"
