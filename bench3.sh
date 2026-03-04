@@ -8,16 +8,13 @@ decode_gpus=$4
 model_path=$5
 model_name=$6
 MODEL_PATH="${model_path}/${model_name}"
-log_path=$7
+LOG_PATH=$7
 
-chosen_isl=${8:-1024}
-chosen_osl=${9:-1024}
-concurrency_list=${10:-"512x1"}
-chosen_req_rate=${11:-1}
-random_range_ratio=${12:-0.8}
-num_prompts_multiplier=${13:-10}
+BENCH_INPUT_LEN=${8:-900}
+BENCH_OUTPUT_LEN=${9:-400}
+CONCURRENCY=${10:-1024}
 
-echo "Config ${chosen_isl}; ${chosen_osl}; ${chosen_concurrencies[0]}; ${chosen_req_rate}"
+echo "Config input=${BENCH_INPUT_LEN} output=${BENCH_OUTPUT_LEN}; Concurrency=${CONCURRENCY}"
 
 head_node="localhost"
 head_port="30000"
@@ -60,9 +57,9 @@ echo "[$(date)] Launching benchmark in background, output to console (captured b
         --dataset-path "$DATASET_FILE" \
         --model-path $MODEL_PATH \
         --base-url http://$ROUTER_NODE:30000 \
-        --batch-size 1024 \
-        --input-len 1000 \
-        --output-len 1000 \
+        --batch-size $CONCURRENCY \
+        --input-len $BENCH_INPUT_LEN \
+        --output-len $BENCH_OUTPUT_LEN \
         --skip-warmup
 ) &
 BENCHMARK_PID=$!
@@ -86,5 +83,9 @@ BENCHMARK_EXIT=$?
 
 echo "[$(date)] Benchmark finished with exit code $BENCHMARK_EXIT"
 
-# PYTHONPATH=/sgl-workspace/sglang/python:$PYTHONPATH python3 -m sglang.bench_one_batch_server --dataset-path /mnt/nfs/minchsun/dataset/ShareGPT_V3_unfiltered_cleaned_split.json --model-path /models/DeepSeek-R1 \
-#     --base-url http://10.2.224.7:30000 --batch-size 24 --input-len 1000 --output-len 1000 --skip-warmup
+result=$(python3 $SGL_WS_PATH/parse_decode_log.py "$LOG_PATH" "$BENCH_OUTPUT_LEN" "$CONCURRENCY")
+tpot=$(echo "$result" | sed -n '1p')
+output_throughput=$(echo "$result" | sed -n '2p')
+
+echo "TPOT = $tpot ms"
+echo "Output throughput = $output_throughput tokens/s"

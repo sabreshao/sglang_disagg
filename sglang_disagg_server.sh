@@ -610,9 +610,6 @@ else
             cp /run_logs/slurm_job-${SLURM_JOB_ID}/* /sglang_disagg/logs/slurm_job-${SLURM_JOB_ID}/
         fi
     fi
-    
-    decode_time=$(python /sglang_disagg/parse_decode_log.py "/run_logs/slurm_job-${SLURM_JOB_ID}/decode_NODE${NODE_RANK}.log")
-    echo "Decode time = $time_diff s"
 
 fi
 
