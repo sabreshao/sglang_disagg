@@ -455,9 +455,14 @@ if [ "$NODE_RANK" -eq 0 ]; then
         echo "Created directory: /sglang_disagg/logs"
     fi
 
+    if [ ! -d /sglang_disagg/logs/slurm_job-${SLURM_JOB_ID} ]; then
+        mkdir -p /sglang_disagg/logs/slurm_job-${SLURM_JOB_ID}
+        echo "Created directory: /sglang_disagg/logs/slurm_job-${SLURM_JOB_ID}"
+    fi
+
     # Copy the bench.sh result from tmp folder into shared nfs folder
     if [[ "$DRY_RUN" -eq 0 ]]; then
-        cp -r /run_logs/slurm_job-${SLURM_JOB_ID} /sglang_disagg/logs/
+        cp /run_logs/slurm_job-${SLURM_JOB_ID}/* /sglang_disagg/logs/slurm_job-${SLURM_JOB_ID}/
     fi
 
     echo "Killing the proxy server and prefill server"
@@ -593,6 +598,21 @@ else
     if [[ "$DRY_RUN" -eq 0 ]]; then
         kill $decode_pid
     fi
+
+    if [ "$RANK" -eq 0 ]; then
+        if [ ! -d /sglang_disagg/logs/slurm_job-${SLURM_JOB_ID} ]; then
+            mkdir -p /sglang_disagg/logs/slurm_job-${SLURM_JOB_ID}
+            echo "Created directory: /sglang_disagg/logs/slurm_job-${SLURM_JOB_ID}"
+        fi
+
+        # Copy the bench.sh result from tmp folder into shared nfs folder
+        if [[ "$DRY_RUN" -eq 0 ]]; then
+            cp /run_logs/slurm_job-${SLURM_JOB_ID}/* /sglang_disagg/logs/slurm_job-${SLURM_JOB_ID}/
+        fi
+    fi
+    
+    decode_time=$(python /sglang_disagg/parse_decode_log.py "/run_logs/slurm_job-${SLURM_JOB_ID}/decode_NODE${NODE_RANK}.log")
+    echo "Decode time = $time_diff s"
 
 fi
 
