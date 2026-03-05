@@ -5,6 +5,7 @@ from datetime import datetime
 
 TIMESTAMP_RE = re.compile(r'^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})')
 SLOW_DOWN_RE = re.compile(r'/slow_down')
+DECODE_BATCH_RE = re.compile(r'Decode batch.*#running-req: ([1-9]\d*),')
 TS_FMT = "%Y-%m-%d %H:%M:%S"
 
 
@@ -18,21 +19,22 @@ def parse_log(path, output_len, batch_size):
             if not m:
                 continue
             ts = datetime.strptime(m.group(1), TS_FMT)
-            last_ts = ts
             if SLOW_DOWN_RE.search(line):
                 slow_down_timestamps.append(ts)
+            if DECODE_BATCH_RE.search(line):
+                last_ts = ts
 
-    if len(slow_down_timestamps) < 2:
-        print(f"Error: found {len(slow_down_timestamps)} /slow_down request(s), need at least 2.", file=sys.stderr)
+    if len(slow_down_timestamps) < 1:
+        print(f"Error: found no /slow_down requests.", file=sys.stderr)
         sys.exit(1)
 
-    second_slow_down = slow_down_timestamps[1]
-    decode_time = (last_ts - second_slow_down).total_seconds()
+    last_slow_down = slow_down_timestamps[-1]
+    decode_time = (last_ts - last_slow_down).total_seconds()
 
     tpot = decode_time / output_len
     output_throughput = batch_size * output_len / decode_time
 
-    print(f"2nd /slow_down  : {second_slow_down}", file=sys.stderr)
+    print(f"Last /slow_down : {last_slow_down}", file=sys.stderr)
     print(f"Last timestamp  : {last_ts}", file=sys.stderr)
     print(f"Decode time     : {decode_time:.2f} seconds", file=sys.stderr)
 
