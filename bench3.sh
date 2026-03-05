@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 
 n_prefill=$1
 n_decode=$2
@@ -20,7 +19,7 @@ head_node="localhost"
 head_port="30000"
 
 
-SLOWDOWN_DURATION=${SLOWDOWN_DURATION:-600}  # seconds before stopping slow_down (10 minutes)
+SLOWDOWN_DURATION=${SLOWDOWN_DURATION:-60}  # seconds before stopping slow_down (10 minutes)
 ROUTER_NODE=${ROUTER_NODE:-localhost}
 
 # --- start_slow_down ---
@@ -54,6 +53,8 @@ echo "[$(date)] Launching benchmark in background, output to console (captured b
     #sed -i 's/dp_size = server_info\.get("dp_size", None) or 1/dp_size = internal_state[0].get("dp_size", None) or 1/' /sgl-workspace/sglang/python/sglang/test/bench_one_batch_server_internal.py
     #sed -i 's| + "/get_server_info"|.replace(":30000", ":8000") + "/get_server_info"|g' /sgl-workspace/sglang/python/sglang/test/bench_one_batch_server_internal.py
 
+    set -x
+
     python3 -m sglang.bench_one_batch_server \
         --dataset-path "$DATASET_FILE" \
         --model-path $MODEL_PATH \
@@ -69,6 +70,7 @@ echo "[$(date)] Benchmark running with PID $BENCHMARK_PID"
 # --- wait, then stop_slow_down ---
 echo "[$(date)] Waiting ${SLOWDOWN_DURATION}s before stopping slow_down..."
 sleep $SLOWDOWN_DURATION
+python $SGL_WS_PATH/wait_for_prefill_idle.py --prefill_url http://${head_node}:8000
 
 echo "[$(date)] Stopping slow_down while benchmark is still running..."
 echo "will send slow_down request to DECODE_HEAD_NODE($DECODE_HEAD_NODE)"
