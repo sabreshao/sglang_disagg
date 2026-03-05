@@ -614,7 +614,10 @@ else
         tpot=$(echo "$result" | sed -n '1p')
         output_throughput=$(echo "$result" | sed -n '2p')
 
-        echo "TPOT = $tpot ms"
+        echo "Batch size = $BENCH_MAX_CONCURRENCY"
+        echo "Input len  = $BENCH_INPUT_LEN"
+        echo "Output len = $BENCH_OUTPUT_LEN"
+        echo "TPOT       = $tpot ms"
         echo "Output throughput = $output_throughput tokens/s"
     fi
 
