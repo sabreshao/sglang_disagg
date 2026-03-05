@@ -24,6 +24,7 @@ SLOWDOWN_DURATION=${SLOWDOWN_DURATION:-600}  # seconds before stopping slow_down
 ROUTER_NODE=${ROUTER_NODE:-localhost}
 
 # --- start_slow_down ---
+sleep 90  # sleep to let server warm up finish
 echo "[$(date)] Starting slow_down..."
 echo "will send slow_down request to DECODE_HEAD_NODE($DECODE_HEAD_NODE)"
 curl -H "Content-Type: application/json" \
