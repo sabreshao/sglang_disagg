@@ -86,7 +86,7 @@ When `PREFILL_TP_SIZE > 8`, a single prefill worker spans multiple nodes (`PREFI
 | `BENCH_OUTPUT_LEN` | Output sequence length in tokens |
 | `BENCH_RANDOM_RANGE_RATIO` | Variance ratio for sequence lengths (1 = fixed, 0.8 = ±80%), not used in `bench_throughput_with_slow_down.sh` |
 | `BENCH_NUM_PROMPTS_MULTIPLIER` | Total prompts = `BENCH_MAX_CONCURRENCY * multiplier`, not used in `bench_throughput_with_slow_down.sh` |
-| `BENCH_MAX_CONCURRENCY` | Maximum concurrent requests. Can be a single value or a descending list like `"1024x512x128"` |
+| `BENCH_MAX_CONCURRENCY` | Maximum concurrent requests. Can be a single value or a descending list like `"1024x512x128"`, in `bench_throughput_with_slow_down.sh` it should be a single number representing `batch_size` |
 
 ### Misc
 
