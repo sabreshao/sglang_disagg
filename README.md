@@ -4,7 +4,7 @@ Scripts for running **prefill-decode disaggregated inference** using SGLang on A
 
 Supported models:
 - DeepSeek-V3 / DeepSeek-V3-0324
-- DeepSeek-R1 / DeepSeek-R1-0528-MXFP4-Preview
+- DeepSeek-R1 / DeepSeek-R1-0528
 - Qwen3-235B
 
 ---
