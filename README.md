@@ -55,25 +55,38 @@ Logs are written to:
 
 ## File Overview
 
+**Root — user-facing entry points:**
+
 | File | Description |
 |------|-------------|
 | `run_interactive_disagg.sh` | **Entry point** for DeepSeek-R1 interactive runs (salloc). Edit env vars here. |
 | `run_interactive_disagg_qwen3.sh` | **Entry point** for Qwen3-235B interactive runs (salloc). Edit env vars here. |
 | `run_submit_disagg.sh` | Entry point for non-interactive batch submission via sbatch. |
-| `run_xPyD_models.slurm` | Core SLURM orchestration: validates model, resolves node IPs, launches Docker on each node. |
-| `sglang_disagg_server.sh` | Per-node script (runs inside Docker): starts prefill/decode servers, router, and benchmark based on node rank. |
-| `bench_throughput_with_slow_down.sh` | Throughput benchmark using `sglang.bench_one_batch_server` with slow_down coordination. |
-| `bench_functional.sh` | Accuracy/functional benchmark: single chat completion + GSM8K. Run manually after servers are up. |
-| `benchmark_lib.sh` | Shared benchmark utilities: `wait_for_server_ready`, `run_benchmark_serving`. |
-| `benchmark_parser.py` | Parses benchmark log files into a table or CSV of throughput/latency metrics. |
-| `set_env_vars.sh` | Sets RDMA devices, network interfaces, and MORI/SGLang env vars based on hostname. |
-| `socket_barrier.py` | Multi-node TCP barrier: waits for all nodes to open a port or pass a health check. |
-| `socket_wait.py` | Polls until a remote TCP port closes (used to detect when the router shuts down). |
-| `wait_for_prefill_idle.py` | Polls prefill server's `/v1/loads` until all DP ranks are idle (no pending requests). |
-| `parse_decode_log.py` | Extracts TPOT (ms) and output throughput (tokens/s) from decode server logs. |
-| `enable_dcqcn.sh` | Configures DCQCN congestion control on AMD AINIC devices. |
-| `qos.sh` | Configures PFC and DSCP-priority QoS mappings on AINIC ports. |
 | `alloc_nodes.sh` | Helper to salloc a specific list of nodes by hostname. |
+
+**`scripts/` — orchestration and server scripts:**
+
+| File | Description |
+|------|-------------|
+| `scripts/run_xPyD_models.slurm` | Core SLURM orchestration: validates model, resolves node IPs, launches Docker on each node. |
+| `scripts/sglang_disagg_server.sh` | Per-node script (runs inside Docker): starts prefill/decode servers, router, and benchmark based on node rank. |
+| `scripts/submit_disagg.sh` | sbatch wrapper called by `run_submit_disagg.sh`. |
+| `scripts/bench_throughput_with_slow_down.sh` | Throughput benchmark using `sglang.bench_one_batch_server` with slow_down coordination. |
+| `scripts/bench_functional.sh` | Accuracy/functional benchmark: single chat completion + GSM8K. Run manually after servers are up. |
+| `scripts/benchmark_lib.sh` | Shared benchmark utilities: `wait_for_server_ready`, `run_benchmark_serving`. |
+| `scripts/set_env_vars.sh` | Sets RDMA devices, network interfaces, and MORI/SGLang env vars based on hostname. |
+| `scripts/enable_dcqcn.sh` | Configures DCQCN congestion control on AMD AINIC devices. |
+| `scripts/qos.sh` | Configures PFC and DSCP-priority QoS mappings on AINIC ports. |
+
+**`utils/` — Python utilities and log parsers:**
+
+| File | Description |
+|------|-------------|
+| `utils/socket_barrier.py` | Multi-node TCP barrier: waits for all nodes to open a port or pass a health check. |
+| `utils/socket_wait.py` | Polls until a remote TCP port closes (used to detect when the router shuts down). |
+| `utils/wait_for_prefill_idle.py` | Polls prefill server's `/v1/loads` until all DP ranks are idle (no pending requests). |
+| `utils/benchmark_parser.py` | Parses benchmark log files into a table or CSV of throughput/latency metrics. |
+| `utils/parse_decode_log.py` | Extracts TPOT (ms) and output throughput (tokens/s) from decode server logs. |
 
 ---
 
@@ -155,10 +168,10 @@ After a run, logs are in `/tmp/slurm_job-$SLURM_JOB_ID/` and copied to `./logs/s
 
 ```bash
 # Display results as a table
-python3 benchmark_parser.py /tmp/slurm_job-$SLURM_JOB_ID/pd_sglang_bench_serving.sh_NODE0.log
+python3 utils/benchmark_parser.py /tmp/slurm_job-$SLURM_JOB_ID/pd_sglang_bench_serving.sh_NODE0.log
 
 # Save to CSV
-python3 benchmark_parser.py /tmp/slurm_job-$SLURM_JOB_ID/pd_sglang_bench_serving.sh_NODE0.log --csv results.csv
+python3 utils/benchmark_parser.py /tmp/slurm_job-$SLURM_JOB_ID/pd_sglang_bench_serving.sh_NODE0.log --csv results.csv
 ```
 
 ---

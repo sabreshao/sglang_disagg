@@ -60,11 +60,11 @@ VALID_MODELS=( \
 
 # Each model maps to its per-node server launcher script
 declare -A MODEL_RUNFILES=(
-    ["DeepSeek-V3"]="sglang_disagg_server.sh"
-    ["DeepSeek-V3-0324"]="sglang_disagg_server.sh"
-    ["DeepSeek-R1"]="sglang_disagg_server.sh"
-    ["DeepSeek-R1-0528-MXFP4-Preview"]="sglang_disagg_server.sh"
-    ["Qwen3-235B"]="sglang_disagg_server.sh"
+    ["DeepSeek-V3"]="scripts/sglang_disagg_server.sh"
+    ["DeepSeek-V3-0324"]="scripts/sglang_disagg_server.sh"
+    ["DeepSeek-R1"]="scripts/sglang_disagg_server.sh"
+    ["DeepSeek-R1-0528-MXFP4-Preview"]="scripts/sglang_disagg_server.sh"
+    ["Qwen3-235B"]="scripts/sglang_disagg_server.sh"
 )
 
 # Resolve the run file for the requested model
@@ -390,8 +390,8 @@ srun --nodelist="$SELECTED_NODELIST_SRUN" bash -c '
     sync
     # Force re-stat of the mounted directory to refresh NFS handles
     ls -la '"$DI_REPO_DIR"' > /dev/null 2>&1
-    stat '"$DI_REPO_DIR"'/sglang_disagg_server.sh > /dev/null 2>&1
-    cat '"$DI_REPO_DIR"'/sglang_disagg_server.sh > /dev/null 2>&1
+    stat '"$DI_REPO_DIR"'/scripts/sglang_disagg_server.sh > /dev/null 2>&1
+    cat '"$DI_REPO_DIR"'/scripts/sglang_disagg_server.sh > /dev/null 2>&1
     # Drop caches if we have permission (optional, requires root)
     echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null 2>&1 || true
     echo "NFS cache refreshed on $(hostname)"

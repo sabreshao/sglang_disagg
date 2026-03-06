@@ -101,7 +101,7 @@ echo "[$(date)] Benchmark running with PID $BENCHMARK_PID"
 # then release the slow_down so decode proceeds at full speed.
 echo "[$(date)] Waiting ${SLOWDOWN_DURATION}s before stopping slow_down..."
 sleep $SLOWDOWN_DURATION
-python $SGL_WS_PATH/wait_for_prefill_idle.py --prefill_url http://${head_node}:8000
+python $SGL_WS_PATH/utils/wait_for_prefill_idle.py --prefill_url http://${head_node}:8000
 
 echo "[$(date)] Stopping slow_down while benchmark is still running..."
 echo "will send slow_down request to DECODE_HEAD_NODE($DECODE_HEAD_NODE)"

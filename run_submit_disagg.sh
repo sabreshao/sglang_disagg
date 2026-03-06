@@ -42,7 +42,7 @@ export BENCH_RANDOM_RANGE_RATIO=0.8
 export RUNNER_NAME="debug_job"
 export NODE_LIST="node02,node04"
 
-JOB_ID=$(bash submit_disagg.sh \
+JOB_ID=$(bash scripts/submit_disagg.sh \
     $PREFILL_NODES $PREFILL_WORKERS $DECODE_NODES $DECODE_WORKERS \
     $ISL $OSL $CONCURRENCIES $REQUEST_RATE \
     $PREFILL_ENABLE_EP $PREFILL_ENABLE_DP \

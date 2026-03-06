@@ -75,7 +75,7 @@ DRY_RUN="${DRY_RUN:-0}"
 #   MORI_SHMEM_MODE   - shared memory isolation mode for MORI RDMA
 #   MORI_MAX_DISPATCH_TOKENS_PREFILL/DECODE - max tokens dispatched per rank
 #   MORI_RDMA_TC / MORI_RDMA_SL - RDMA traffic class and service level from QoS
-source $SGL_WS_PATH/set_env_vars.sh
+source $SGL_WS_PATH/scripts/set_env_vars.sh
 
 host_ip=$SGLANG_HOST_IP
 host_name=$(hostname)
@@ -357,7 +357,7 @@ fi
 # All nodes wait at this barrier to ensure every Docker container has started
 # before any node proceeds to launch a server. Timeout: 300 seconds.
 echo "Waiting at the container creation barrier on $host_name"
-python $SGL_WS_PATH/socket_barrier.py \
+python $SGL_WS_PATH/utils/socket_barrier.py \
     --local-ip ${host_ip} \
     --local-port 5000 \
     --enable-port \
@@ -427,7 +427,7 @@ if [ "$NODE_RANK" -eq 0 ]; then
 
     # Wait for ALL node IPs to open port 8000 (server ready signal).
     # Timeout: 1800 seconds (30 minutes) to allow model loading time.
-    BARRIER_CMD="python $SGL_WS_PATH/socket_barrier.py \
+    BARRIER_CMD="python $SGL_WS_PATH/utils/socket_barrier.py \
         --node-ips ${IPADDRS} \
         --node-ports 8000 \
         --wait-for-all-ports \
@@ -462,7 +462,7 @@ if [ "$NODE_RANK" -eq 0 ]; then
         set +x
 
         # Wait for the router's /health endpoint to return 200 before starting benchmark.
-        BARRIER_CMD="python $SGL_WS_PATH/socket_barrier.py \
+        BARRIER_CMD="python $SGL_WS_PATH/utils/socket_barrier.py \
         --node-ips ${NODE0_ADDR} \
         --node-ports 30000 \
         --wait-for-all-health \
@@ -495,7 +495,7 @@ if [ "$NODE_RANK" -eq 0 ]; then
 
     # Run benchmark: arguments are positional (see bench_throughput_with_slow_down.sh for details)
     # n_prefill n_decode prefill_gpus decode_gpus model_dir model_name log_path isl osl concurrency_list req_rate random_range_ratio num_prompts_multiplier
-    BENCH_CMD="bash /sglang_disagg/bench_throughput_with_slow_down.sh ${xP} ${yD} $((PREFILL_TP_SIZE*xP)) $((DECODE_TP_SIZE*yD)) \
+    BENCH_CMD="bash /sglang_disagg/scripts/bench_throughput_with_slow_down.sh ${xP} ${yD} $((PREFILL_TP_SIZE*xP)) $((DECODE_TP_SIZE*yD)) \
         $MODEL_DIR $MODEL_NAME /run_logs/slurm_job-${SLURM_JOB_ID} ${BENCH_INPUT_LEN} \
         ${BENCH_OUTPUT_LEN} "${BENCH_MAX_CONCURRENCY}" ${BENCH_REQUEST_RATE} \
         ${BENCH_RANDOM_RANGE_RATIO} ${BENCH_NUM_PROMPTS_MULTIPLIER}"
@@ -570,7 +570,7 @@ elif [ "$NODE_RANK" -gt 0 ] && [ "$NODE_RANK" -lt "$NODE_OFFSET" ]; then
 
     # Wait for the router on node 0 port 30000 to come up (benchmark running)
     echo "Waiting for proxy server to be up..."
-    BARRIER_CMD="python $SGL_WS_PATH/socket_barrier.py \
+    BARRIER_CMD="python $SGL_WS_PATH/utils/socket_barrier.py \
         --node-ips ${NODE0_ADDR} \
         --node-ports 30000 \
         --wait-for-all-ports \
@@ -584,7 +584,7 @@ elif [ "$NODE_RANK" -gt 0 ] && [ "$NODE_RANK" -lt "$NODE_OFFSET" ]; then
 
     # Keep this node alive until the router closes (benchmark finished)
     echo "Waiting until proxy server closes..."
-    WAIT_CMD="python $SGL_WS_PATH/socket_wait.py \
+    WAIT_CMD="python $SGL_WS_PATH/utils/socket_wait.py \
         --remote-ip ${NODE0_ADDR} \
         --remote-port 30000"
 
@@ -642,7 +642,7 @@ else
 
     # Wait for the router on node 0 to come up
     echo "Waiting for proxy server to be up..."
-    BARRIER_CMD="python $SGL_WS_PATH/socket_barrier.py \
+    BARRIER_CMD="python $SGL_WS_PATH/utils/socket_barrier.py \
         --node-ips ${NODE0_ADDR} \
         --node-ports 30000 \
         --wait-for-all-ports \
@@ -656,7 +656,7 @@ else
 
     # Wait until the router closes (benchmark finished on node 0)
     echo "Waiting until proxy server closes..."
-    WAIT_CMD="python $SGL_WS_PATH/socket_wait.py \
+    WAIT_CMD="python $SGL_WS_PATH/utils/socket_wait.py \
         --remote-ip ${NODE0_ADDR} \
         --remote-port 30000"
 
@@ -684,7 +684,7 @@ else
         fi
 
         # Parse decode server log to extract TPOT and output throughput metrics
-        result=$(python $SGL_WS_PATH/parse_decode_log.py "/run_logs/slurm_job-${SLURM_JOB_ID}/decode_NODE${NODE_RANK}.log" "$BENCH_OUTPUT_LEN" "$BENCH_MAX_CONCURRENCY")
+        result=$(python $SGL_WS_PATH/utils/parse_decode_log.py "/run_logs/slurm_job-${SLURM_JOB_ID}/decode_NODE${NODE_RANK}.log" "$BENCH_OUTPUT_LEN" "$BENCH_MAX_CONCURRENCY")
         tpot=$(echo "$result" | sed -n '1p')
         output_throughput=$(echo "$result" | sed -n '2p')
 

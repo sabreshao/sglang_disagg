@@ -102,4 +102,4 @@ export LOAD_DUMMY=0
 export DRY_RUN=0
 
 # Launch the main SLURM orchestration script and tee output to a log file.
-bash run_xPyD_models.slurm 2>&1 | tee log_${MODEL_NAME}_xP${xP}_yD${yD}.log
+bash scripts/run_xPyD_models.slurm 2>&1 | tee log_${MODEL_NAME}_xP${xP}_yD${yD}.log
