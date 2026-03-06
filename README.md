@@ -1,191 +1,172 @@
-# AMD InferenceMAX Distributed Inference MI355X Recipe
+# SGLang Disaggregated Inference on AMD MI355X
 
+Scripts for running **prefill-decode disaggregated inference** using SGLang on AMD MI355X (GFX950) clusters, with MORI RDMA for KV-cache transfer.
 
-## Verified recipe
-```
-# Configure AINIC on each node bare metal
+Supported models:
+- DeepSeek-V3 / DeepSeek-V3-0324
+- DeepSeek-R1 / DeepSeek-R1-0528
+- Qwen3-235B
+
+---
+
+## Prerequisites
+
+- A SLURM cluster with MI355X nodes (minimum 2 nodes: 1 prefill + 1 decode)
+- A prebuilt ROCm Docker image with SGLang, AITER, MORI, and AINIC drivers, e.g.:
+  `rocm/ali-private:sglang-0.5.8-rocm700-mi35x-mori-0210-qwen3-moe-0228`
+- Model weights accessible from all nodes (typically via shared NFS)
+- AMD AINIC (`nicctl`) installed on all nodes
+
+---
+
+## Quick Start
+
+### 1. Configure AINIC on each bare-metal node
+
+```bash
+cd scripts
 ./enable_dcqcn.sh && ./qos.sh
-
-# Allocate two node 28/29
-./alloc_2.sh
-
-# Launch 1P1D DeepSeek-R1. inference benchmark can run but very slow.
-./run_interactive_disagg.sh
-
-# Launch 1P1D Qwen3-235B. inference benchmark can run but very slow.
-./run_interactive_disagg_qwen3.sh
-
-# Check log.
-All logs are in /tmp/slurm_job-$SLURM_JOBID /tmp/slurm_job-$SLURM_JOB_ID
-
-# Check nic.
-sudo nicctl show version host-software
-sudo nicctl show version firmware
-
 ```
 
+### 2. Allocate nodes
 
+```bash
+# Using the helper (adjust partition and node names):
+NODE_LIST=node07,node08,node09 bash alloc_nodes.sh
 
+# Or allocate manually:
+salloc -N 3 --ntasks-per-node=1 --nodelist=<Nodes> --gres=gpu:8 -p <partition> -t 12:00:00
+```
 
-## List of Models - supported in this recipe, more models support are coming 
+### 3. Launch inference + benchmark
 
-- DeepSeek-V3 (https://huggingface.co/deepseek-ai/DeepSeek-V3)
-- DeepSeek-V3-0324 (https://huggingface.co/deepseek-ai/DeepSeek-V3-0324)
-- DeepSeek-R1 (https://huggingface.co/deepseek-ai/DeepSeek-R1)
-- DeepSeek-R1-0528 (https://huggingface.co/deepseek-ai/DeepSeek-R1-0528)
+```bash
+# DeepSeek-R1 (edit variables inside the script first):
+bash run_interactive_disagg.sh
 
-This repository contains scripts and documentation to launch multi nodes distributed inference through using the SGlang framework for above models. You will find setup instructions, node assignment details and benchmarking commands.
+# Qwen3-235B:
+bash run_interactive_disagg_qwen3.sh
+```
 
-## 📝 Prerequisites
+Logs are written to:
+- Console: `log_<MODEL_NAME>_xP<xP>_yD<yD>.log`
+- Per-node: `/tmp/slurm_job-$SLURM_JOB_ID/`
 
-- A Slurm cluster with required Nodes -> xP + yD  (minimum size 2: xP=1 and yD=1)
-- A prebuilt rocm docker image supporting MI355(GFX950) contains all dependency library including SGLang, AITER, MoRI, AINIC driver e.g. `rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1224`
-- Access to a shared filesystem for log collection( cluster specific)
+---
 
+## Configuration Reference
 
-## Scripts and Benchmarking
+### Topology
 
-Few files of significance:
+| Variable | Description |
+|----------|-------------|
+| `xP` | Number of prefill worker groups |
+| `yD` | Number of decode worker groups |
+| `NUM_NODES` | Total nodes to use from the salloc allocation (`xP * PREFILL_NODES_PER_WORKER + yD * DECODE_NODES_PER_WORKER`) |
 
-| File | Description |
-|------|-------------|
-| `run_submit_disagg.sh` | Run sbatch job automatically, this is entrypoint for CI integation |
-| `run_interactive_disagg.sh` | Run interactive slurm job so before running, user need to pre-salloc |
-| `run_xPyD_models.slurm` | Core slurm script to launch docker containers on all nodes using either sbatch or salloc |
-| `sglang_disagg_server.sh` | Script that runs inside each docker to start required router, prefill and decode services |
-| `bench.sh` | Benchmark script to run vllm/sglang benchmarking tool for performance measurement |
-| `benchmark_parser.py` | Log parser script to be run on CONCURRENY benchmark log file to generate tabulated data |
+When `PREFILL_TP_SIZE > 8`, a single prefill worker spans multiple nodes (`PREFILL_NODES_PER_WORKER = ceil(TP/8)`). Same for decode.
 
-## Specify your IB Devices
-Run the following command to list all available InfiniBand (IB) devices:
+### Parallelism
+
+| Variable | Description |
+|----------|-------------|
+| `PREFILL_TP_SIZE` | Tensor Parallelism size for prefill (usually = GPUs per node, e.g. 8) |
+| `PREFILL_ENABLE_EP` | Enable Expert Parallelism for prefill (`true`/`false`). EP size = TP size when enabled. |
+| `PREFILL_ENABLE_DP` | Enable Data Parallelism for prefill (`true`/`false`). DP size = TP size when enabled. |
+| `DECODE_TP_SIZE` | Tensor Parallelism size for decode (set to 16 for 2-node decode workers) |
+| `DECODE_ENABLE_EP` | Enable Expert Parallelism for decode (`true`/`false`) |
+| `DECODE_ENABLE_DP` | Enable Data Parallelism for decode (`true`/`false`) |
+| `DECODE_MTP_SIZE` | Multi-Token Prediction steps for speculative decoding (0 = disabled) |
+
+### Benchmark
+
+| Variable | Description |
+|----------|-------------|
+| `BENCH_INPUT_LEN` | Input sequence length in tokens |
+| `BENCH_OUTPUT_LEN` | Output sequence length in tokens |
+| `BENCH_RANDOM_RANGE_RATIO` | Variance ratio for sequence lengths (1 = fixed, 0.8 = ±80%), not used in `bench_throughput_with_slow_down.sh` |
+| `BENCH_NUM_PROMPTS_MULTIPLIER` | Total prompts = `BENCH_MAX_CONCURRENCY * multiplier`, not used in `bench_throughput_with_slow_down.sh` |
+| `BENCH_MAX_CONCURRENCY` | Maximum concurrent requests. Can be a single value or a descending list like `"1024x512x128"`, in `bench_throughput_with_slow_down.sh` it should be a single number representing `batch_size` |
+
+### Misc
+
+| Variable | Description |
+|----------|-------------|
+| `MODEL_NAME` | Model directory name under `MODEL_DIR`. Must be one of the supported models. |
+| `MODEL_DIR` | Base path to model weights on the shared filesystem |
+| `DOCKER_IMAGE_NAME` | ROCm Docker image to use. Defaults to the Qwen3-capable image in `run_xPyD_models.slurm`. |
+| `LOAD_DUMMY` | Set to `1` to skip loading real weights (use dummy weights for smoke tests) |
+| `DRY_RUN` | Set to `1` to print all commands without executing them |
+| `SGLANG_DIR` | Optional path to an external SGLang checkout to bind-mount into Docker |
+
+---
+
+## Specifying InfiniBand Devices
+
+List available IB devices:
 
 ```bash
 ibv_devinfo -l
 ```
 
-Example output:
-
-```text
-8 HCAs found:
-        ionic_0
-        ionic_1
-        ionic_2
-        ionic_3
-        ionic_4
-        ionic_5
-        ionic_6
-        ionic_7
-```
-
-Update `set_env_vars.sh` with the comma-separated list of device names found on your system:
+Update `set_env_vars.sh` with the correct device names for your hostname pattern:
 
 ```bash
 export IBDEVICES=ionic_0,ionic_1,ionic_2,ionic_3,ionic_4,ionic_5,ionic_6,ionic_7
-``` 
+```
 
-## Sbatch run command (non-interactive)
+---
 
-Before submitting the job, ensure you update the following environment variables to match your specific cluster configuration and requirements in `run_submit_disagg.sh`:
+## Log Files
+
+After a run, logs are in `/tmp/slurm_job-$SLURM_JOB_ID/` and copied to `./logs/slurm_job-$SLURM_JOB_ID/`:
+
+| File | Contents |
+|------|----------|
+| `pd_sglang_bench_serving.sh_NODE<N>.log` | Full output for node N |
+| `prefill_NODE<N>.log` | Prefill server log for node N |
+| `decode_NODE<N>.log` | Decode server log for node N |
+| `proxy_NODE0.log` | Router log |
+
+### Parse benchmark results
+
+The benchmark uses a **slow_down** technique to build up a full batch before decode begins:
+the decode server is asked to hold all prefilled tokens in place until `BENCH_MAX_CONCURRENCY`
+requests have accumulated. Once the batch is full, slow_down is released and all sequences
+decode together at steady state.
+
+Because of this, the throughput numbers reported by the SGLang benchmark tool itself are
+**not valid** — they measure elapsed wall time from request submission, which includes the
+slow_down hold period. The true decode performance must be extracted from the decode server
+log instead.
+
+The decode log records a stop slow_down timestamp when slow_down is released and a
+finish timestamp when the last token is generated. The decode time is the interval between
+these two events:
+
+```
+decode_time = t_finish - t_stop_slow_down
+```
+
+From that, the two key metrics are:
+
+```
+Output throughput (tok/s) = batch_size * output_len / decode_time
+TPOT (ms)                 = decode_time * 1000 / output_len
+```
+
+Use `utils/parse_decode_log.py` to extract these automatically:
 
 ```bash
-
-# SLURM Job Configuration
-export SLURM_ACCOUNT="amd"       # The account name for SLURM job accounting and resource allocation
-export SLURM_PARTITION="compute" # The specific cluster partition (queue) to submit the job to
-export TIME_LIMIT="24:00:00"     # Maximum wall time for the job (Hours:Minutes:Seconds)
-
-# Model Configuration
-export MODEL_PATH="/nfsdata"     # Base directory where the model weights are stored
-export MODEL_NAME="DeepSeek-R1"  # Specific model directory name (joined with MODEL_PATH)
-export CONTAINER_IMAGE="rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1223" # Docker image to use for the environment
-
-# Cluster Topology (Disaggregation Setup)
-export PREFILL_NODES=1           # Number of prefill nodes
-export PREFILL_WORKERS=1         # Number of prefill workers
-export DECODE_NODES=2            # Number of decode nodes
-export DECODE_WORKERS=2          # Number of decode workers
-
-# Benchmark/Workload Parameters
-export ISL=1024                  # Input Sequence Length (number of tokens in the prompt)
-export OSL=1024                  # Output Sequence Length (number of tokens to generate)
-export CONCURRENCIES="2048"      # Total number of concurrent requests to simulate in the benchmark. The value can be "32,64,128"
-export REQUEST_RATE="inf"        # Request per second rate. "inf" means send all requests immediately
-
-# Parallelism Strategies
-export PREFILL_ENABLE_EP=true    # Enable Expert Parallelism (EP) for the prefill phase 
-export PREFILL_ENABLE_DP=true    # Enable Data Parallelism (DP) for the prefill phase
-export DECODE_ENABLE_EP=true     # Enable Expert Parallelism (EP) for the decode phase
-export DECODE_ENABLE_DP=true     # Enable Data Parallelism (DP) for the decode phase
+# e.g.
+python3 utils/parse_decode_log.py decode_log.log $output_len $batch_size
 ```
 
-Then submit the batch job into slurm cluster through `bash ./run_submit_disagg.sh`
+---
 
-## Srun run command (interactive)
-
-Make sure applying for an interactive allocation through salloc 
+## Check NIC Version
 
 ```bash
-salloc -N 3 --ntasks-per-node=1 --nodelist=<Nodes> --gres=gpu:8 -p <partition> -t 12:00:00
+sudo nicctl show version host-software
+sudo nicctl show version firmware
 ```
-
-Then modifying the following env accordingly in `run_interactive_disagg.sh`:
-```bash
-# Topology Configuration
-export xP=1                          # Number of nodes assigned for prefill
-export yD=2                          # Number of nodes assigned for decode
-
-# Model Location
-export MODEL_DIR="/nfsdata"          # Base directory path where model weights are stored
-export MODEL_NAME=DeepSeek-R1        # Specific subdirectory name for the model (e.g., /nfsdata/DeepSeek-R1)
-
-# Prefill Node Configuration
-export PREFILL_TP_SIZE=8             # Tensor Parallelism number for Prefill (usually equals GPUs per node)
-export PREFILL_ENABLE_EP=true        # Enable Expert Parallelism (EP) for Prefill
-export PREFILL_ENABLE_DP=true        # Enable Data Parallelism (DP) for Prefill
-
-# Decode Node Configuration
-export DECODE_TP_SIZE=8              # Tensor Parallelism number for Decode (usually equals GPUs per node)
-export DECODE_ENABLE_EP=true         # Enable Expert Parallelism (EP) for Decode
-export DECODE_ENABLE_DP=true         # Enable Data Parallelism (DP) for Decode
-
-# Benchmark Settings
-export BENCH_INPUT_LEN=1024          # Input Sequence Length (number of tokens in the prompt)
-export BENCH_OUTPUT_LEN=1024         # Output Sequence Length (number of tokens to generate)
-export BENCH_RANDOM_RANGE_RATIO=1    # Variance ratio for sequence lengths
-export BENCH_NUM_PROMPTS_MULTIPLIER=10 # Multiplier to determine total prompts (e.g., 10 * concurrency or batch size)
-export BENCH_MAX_CONCURRENCY=2048    # Maximum number of concurrent requests to simulate during the test
-```
-
-And run it through `bash ./run_interactive_disagg.sh`
-
-
-
-## Post execution Log files:
-After execution, a directory named `slurm_job-$SLURM_JOB_ID` is created inside `/tmp` containing the logs. 
-
-Inside that folder:
-``` bash
-pd_sglang_bench_serving.sh_NODE${NODE_RANK}.log - Overall log per ser Node 
-decode_NODE${NODE_RANK}.log - Decode services
-prefill_NODE${NODE_RANK}.log - prefill services
-```
-
-## Benchmark parser ( for CONCURRENCY logs) to tabulate different data
-```
-# Display results on screen
-python3 benchmark_parser.py /tmp/slurm_job-$SLURM_JOB_ID/pd_sglang_bench_serving.sh_NODE$NODE_RANK.log
-
-# Save to specified CSV file
-python3 benchmark_parser.py /tmp/slurm_job-$SLURM_JOB_ID/pd_sglang_bench_serving.sh_NODE$NODE_RANK.log --csv results.csv
-
-# Save to auto-named CSV file
-python3 benchmark_parser.py /tmp/slurm_job-$SLURM_JOB_ID/pd_sglang_bench_serving.sh_NODE$NODE_RANK.log --csv
-```
-
-## History and Acknowledgement
-
-This project is served as a helper repository for supporting ROCm inferenceMAX recipe
-The first version of this project benefited a lot from the following projects:
-
-- [MAD](https://github.com/ROCm/MAD): MAD (Model Automation and Dashboarding) is a comprehensive AI/ML model automation platform from AMD
-- [InferenceMAX](https://github.com/InferenceMAX/InferenceMAX): Open Source Inference Frequent Benchmarking published by Semi Analysis
