@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# bench3.sh - Throughput Benchmark using benchmark_lib.sh
+# bench_throughput_with_slow_down.sh - Throughput Benchmark with Decode Slow-Down
 # =============================================================================
 # Primary benchmark script called by sglang_disagg_server.sh on NODE_RANK=0.
 # It runs a concurrency-sweep benchmark against the router (port 30000) using

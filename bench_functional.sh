@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# bench2.sh - Accuracy / Functional Benchmark
+# bench_functional.sh - Accuracy / Functional Benchmark
 # =============================================================================
 # This script tests model correctness (not throughput) by:
 #   1. Sending a single chat completion request and printing the response

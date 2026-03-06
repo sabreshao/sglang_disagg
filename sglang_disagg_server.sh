@@ -10,7 +10,7 @@
 #     - Starts the HEAD prefill server (TP rank 0 of prefill worker 0)
 #     - Waits for ALL prefill and decode servers to be ready
 #     - Starts the SGLang router (PD-disaggregation mode)
-#     - Runs the benchmark (bench3.sh)
+#     - Runs the benchmark (bench_throughput_with_slow_down.sh)
 #     - Copies results to shared NFS and kills servers when done
 #
 #   0 < NODE_RANK < xP*PREFILL_NODES_PER_WORKER:
@@ -484,18 +484,18 @@ if [ "$NODE_RANK" -eq 0 ]; then
     echo "Benchmarking on ${host_name}:${host_ip}"
     cd /sglang_disagg
 
-    # Export IS_MTP flag so bench3.sh knows whether speculative decoding is active
+    # Export IS_MTP flag so bench_throughput_with_slow_down.sh knows whether speculative decoding is active
     if [ "$DECODE_MTP_SIZE" -gt 0 ]; then
         export IS_MTP=true
     else
         export IS_MTP=false
     fi
-    # Head decode node IP used by bench3.sh for slow_down coordination
+    # Head decode node IP used by bench_throughput_with_slow_down.sh for slow_down coordination
     export DECODE_HEAD_NODE=${IP_ARRAY[$NODE_OFFSET]}
 
-    # Run benchmark: arguments are positional (see bench3.sh for details)
+    # Run benchmark: arguments are positional (see bench_throughput_with_slow_down.sh for details)
     # n_prefill n_decode prefill_gpus decode_gpus model_dir model_name log_path isl osl concurrency_list req_rate random_range_ratio num_prompts_multiplier
-    BENCH_CMD="bash /sglang_disagg/bench3.sh ${xP} ${yD} $((PREFILL_TP_SIZE*xP)) $((DECODE_TP_SIZE*yD)) \
+    BENCH_CMD="bash /sglang_disagg/bench_throughput_with_slow_down.sh ${xP} ${yD} $((PREFILL_TP_SIZE*xP)) $((DECODE_TP_SIZE*yD)) \
         $MODEL_DIR $MODEL_NAME /run_logs/slurm_job-${SLURM_JOB_ID} ${BENCH_INPUT_LEN} \
         ${BENCH_OUTPUT_LEN} "${BENCH_MAX_CONCURRENCY}" ${BENCH_REQUEST_RATE} \
         ${BENCH_RANDOM_RANGE_RATIO} ${BENCH_NUM_PROMPTS_MULTIPLIER}"

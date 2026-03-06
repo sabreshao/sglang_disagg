@@ -31,7 +31,7 @@ Supported models:
 
 ```bash
 # Using the helper (adjust partition and node names):
-NODE_LIST=node01,node02,node03 bash alloc_2.sh
+NODE_LIST=node01,node02,node03 bash alloc_nodes.sh
 
 # Or allocate manually:
 salloc -N 3 --ntasks-per-node=1 --nodelist=<Nodes> --gres=gpu:8 -p <partition> -t 12:00:00
@@ -62,8 +62,8 @@ Logs are written to:
 | `run_submit_disagg.sh` | Entry point for non-interactive batch submission via sbatch. |
 | `run_xPyD_models.slurm` | Core SLURM orchestration: validates model, resolves node IPs, launches Docker on each node. |
 | `sglang_disagg_server.sh` | Per-node script (runs inside Docker): starts prefill/decode servers, router, and benchmark based on node rank. |
-| `bench3.sh` | Throughput benchmark using `sglang.bench_one_batch_server` with slow_down coordination. |
-| `bench2.sh` | Accuracy/functional benchmark: single chat completion + GSM8K. Run manually after servers are up. |
+| `bench_throughput_with_slow_down.sh` | Throughput benchmark using `sglang.bench_one_batch_server` with slow_down coordination. |
+| `bench_functional.sh` | Accuracy/functional benchmark: single chat completion + GSM8K. Run manually after servers are up. |
 | `benchmark_lib.sh` | Shared benchmark utilities: `wait_for_server_ready`, `run_benchmark_serving`. |
 | `benchmark_parser.py` | Parses benchmark log files into a table or CSV of throughput/latency metrics. |
 | `set_env_vars.sh` | Sets RDMA devices, network interfaces, and MORI/SGLang env vars based on hostname. |
@@ -73,7 +73,7 @@ Logs are written to:
 | `parse_decode_log.py` | Extracts TPOT (ms) and output throughput (tokens/s) from decode server logs. |
 | `enable_dcqcn.sh` | Configures DCQCN congestion control on AMD AINIC devices. |
 | `qos.sh` | Configures PFC and DSCP-priority QoS mappings on AINIC ports. |
-| `alloc_2.sh` | Helper to salloc a specific list of nodes by hostname. |
+| `alloc_nodes.sh` | Helper to salloc a specific list of nodes by hostname. |
 
 ---
 
