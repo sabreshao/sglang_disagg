@@ -21,21 +21,21 @@
 
 export xP=1
 export yD=1
-export NUM_NODES=2
+export NUM_NODES=3
 export MODEL_NAME=Qwen3-235B
 export MODEL_DIR="/mnt/nfs/RAID/shared/huggingface/hub/"
 export PREFILL_TP_SIZE=8
 export PREFILL_ENABLE_EP=true
 export PREFILL_ENABLE_DP=true
-export DECODE_TP_SIZE=8
+export DECODE_TP_SIZE=16
 export DECODE_ENABLE_EP=true
 export DECODE_ENABLE_DP=true
 export DECODE_MTP_SIZE=0
-export BENCH_INPUT_LEN=1024
-export BENCH_OUTPUT_LEN=1024
+export BENCH_INPUT_LEN=3300
+export BENCH_OUTPUT_LEN=400
 export BENCH_RANDOM_RANGE_RATIO=1
 export BENCH_NUM_PROMPTS_MULTIPLIER=10
-export BENCH_MAX_CONCURRENCY=32
+export BENCH_MAX_CONCURRENCY=512
 export LOAD_DUMMY=0
 export DRY_RUN=0
 
