@@ -72,7 +72,7 @@ export SGLANG_DISAGGREGATION_WAITING_TIMEOUT=1200
 # MORI shared memory configuration
 # MORI_SHMEM_HEAP_SIZE: total RDMA-registered shared memory pool size
 # MORI_SHMEM_MODE=ISOLATION: each process gets its own isolated shmem region
-export MORI_SHMEM_HEAP_SIZE=32G
+# export MORI_SHMEM_HEAP_SIZE=32G
 export MORI_SHMEM_MODE=ISOLATION
 
 # Enable FP8 dispatch in MORI for reduced memory bandwidth during KV transfer

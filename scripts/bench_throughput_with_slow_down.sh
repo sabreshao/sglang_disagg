@@ -53,7 +53,7 @@ ROUTER_NODE=${ROUTER_NODE:-localhost}
 # Send a slow_down request to the decode server to hold prefilled tokens in
 # place while the benchmark fills its request queue. This simulates steady-state
 # decode conditions before measurements begin.
-sleep 90  # sleep to let server warm up finish
+sleep 60  # sleep to let server warm up finish
 echo "[$(date)] Starting slow_down..."
 echo "will send slow_down request to DECODE_HEAD_NODE($DECODE_HEAD_NODE)"
 curl -H "Content-Type: application/json" \
@@ -81,6 +81,8 @@ echo "[$(date)] Launching benchmark in background, output to console (captured b
     else
         echo "Using existing dataset file at $DATASET_FILE"
     fi
+
+    pip install tabulate
 
     set -x
 

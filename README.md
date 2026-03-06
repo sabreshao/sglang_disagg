@@ -24,6 +24,7 @@ Supported models:
 ### 1. Configure AINIC on each bare-metal node
 
 ```bash
+cd scripts
 ./enable_dcqcn.sh && ./qos.sh
 ```
 
@@ -31,7 +32,7 @@ Supported models:
 
 ```bash
 # Using the helper (adjust partition and node names):
-NODE_LIST=node01,node02,node03 bash alloc_nodes.sh
+NODE_LIST=node07,node08,node09 bash alloc_nodes.sh
 
 # Or allocate manually:
 salloc -N 3 --ntasks-per-node=1 --nodelist=<Nodes> --gres=gpu:8 -p <partition> -t 12:00:00
@@ -50,43 +51,6 @@ bash run_interactive_disagg_qwen3.sh
 Logs are written to:
 - Console: `log_<MODEL_NAME>_xP<xP>_yD<yD>.log`
 - Per-node: `/tmp/slurm_job-$SLURM_JOB_ID/`
-
----
-
-## File Overview
-
-**Root — user-facing entry points:**
-
-| File | Description |
-|------|-------------|
-| `run_interactive_disagg.sh` | **Entry point** for DeepSeek-R1 interactive runs (salloc). Edit env vars here. |
-| `run_interactive_disagg_qwen3.sh` | **Entry point** for Qwen3-235B interactive runs (salloc). Edit env vars here. |
-| `run_submit_disagg.sh` | Entry point for non-interactive batch submission via sbatch. |
-| `alloc_nodes.sh` | Helper to salloc a specific list of nodes by hostname. |
-
-**`scripts/` — orchestration and server scripts:**
-
-| File | Description |
-|------|-------------|
-| `scripts/run_xPyD_models.slurm` | Core SLURM orchestration: validates model, resolves node IPs, launches Docker on each node. |
-| `scripts/sglang_disagg_server.sh` | Per-node script (runs inside Docker): starts prefill/decode servers, router, and benchmark based on node rank. |
-| `scripts/submit_disagg.sh` | sbatch wrapper called by `run_submit_disagg.sh`. |
-| `scripts/bench_throughput_with_slow_down.sh` | Throughput benchmark using `sglang.bench_one_batch_server` with slow_down coordination. |
-| `scripts/bench_functional.sh` | Accuracy/functional benchmark: single chat completion + GSM8K. Run manually after servers are up. |
-| `scripts/benchmark_lib.sh` | Shared benchmark utilities: `wait_for_server_ready`, `run_benchmark_serving`. |
-| `scripts/set_env_vars.sh` | Sets RDMA devices, network interfaces, and MORI/SGLang env vars based on hostname. |
-| `scripts/enable_dcqcn.sh` | Configures DCQCN congestion control on AMD AINIC devices. |
-| `scripts/qos.sh` | Configures PFC and DSCP-priority QoS mappings on AINIC ports. |
-
-**`utils/` — Python utilities and log parsers:**
-
-| File | Description |
-|------|-------------|
-| `utils/socket_barrier.py` | Multi-node TCP barrier: waits for all nodes to open a port or pass a health check. |
-| `utils/socket_wait.py` | Polls until a remote TCP port closes (used to detect when the router shuts down). |
-| `utils/wait_for_prefill_idle.py` | Polls prefill server's `/v1/loads` until all DP ranks are idle (no pending requests). |
-| `utils/benchmark_parser.py` | Parses benchmark log files into a table or CSV of throughput/latency metrics. |
-| `utils/parse_decode_log.py` | Extracts TPOT (ms) and output throughput (tokens/s) from decode server logs. |
 
 ---
 
@@ -166,12 +130,36 @@ After a run, logs are in `/tmp/slurm_job-$SLURM_JOB_ID/` and copied to `./logs/s
 
 ### Parse benchmark results
 
-```bash
-# Display results as a table
-python3 utils/benchmark_parser.py /tmp/slurm_job-$SLURM_JOB_ID/pd_sglang_bench_serving.sh_NODE0.log
+The benchmark uses a **slow_down** technique to build up a full batch before decode begins:
+the decode server is asked to hold all prefilled tokens in place until `BENCH_MAX_CONCURRENCY`
+requests have accumulated. Once the batch is full, slow_down is released and all sequences
+decode together at steady state.
 
-# Save to CSV
-python3 utils/benchmark_parser.py /tmp/slurm_job-$SLURM_JOB_ID/pd_sglang_bench_serving.sh_NODE0.log --csv results.csv
+Because of this, the throughput numbers reported by the SGLang benchmark tool itself are
+**not valid** — they measure elapsed wall time from request submission, which includes the
+slow_down hold period. The true decode performance must be extracted from the decode server
+log instead.
+
+The decode log records a stop slow_down timestamp when slow_down is released and a
+finish timestamp when the last token is generated. The decode time is the interval between
+these two events:
+
+```
+decode_time = t_finish - t_stop_slow_down
+```
+
+From that, the two key metrics are:
+
+```
+Output throughput (tok/s) = batch_size * output_len / decode_time
+TPOT (ms)                 = decode_time * 1000 / output_len
+```
+
+Use `utils/parse_decode_log.py` to extract these automatically:
+
+```bash
+# e.g.
+python3 utils/parse_decode_log.py decode_log.log $output_len $batch_size
 ```
 
 ---
@@ -182,12 +170,3 @@ python3 utils/benchmark_parser.py /tmp/slurm_job-$SLURM_JOB_ID/pd_sglang_bench_s
 sudo nicctl show version host-software
 sudo nicctl show version firmware
 ```
-
----
-
-## Acknowledgements
-
-This project is a helper repository for the AMD ROCm InferenceMAX recipe.
-It builds on:
-- [MAD](https://github.com/ROCm/MAD): AMD Model Automation and Dashboarding
-- [InferenceMAX](https://github.com/InferenceMAX/InferenceMAX): Open-source inference benchmarking by SemiAnalysis
