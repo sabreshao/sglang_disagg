@@ -32,7 +32,7 @@ cd scripts
 
 ```bash
 # Using the helper (adjust partition and node names):
-NODE_LIST=node07,node08,node09 bash alloc_nodes.sh
+NODE_LIST=node04,node06,node07,node08,node09 bash alloc_nodes.sh
 
 # Or allocate manually:
 salloc -N 3 --ntasks-per-node=1 --nodelist=<Nodes> --gres=gpu:8 -p <partition> -t 12:00:00
