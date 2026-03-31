@@ -43,7 +43,8 @@ elif [[ $NODENAME == smci355-ccs-aus* ]]; then
     export GLOO_SOCKET_IFNAME=$(ip route | grep '^default' | awk '{print $5}')
     export NCCL_SOCKET_IFNAME=$(ip route | grep '^default' | awk '{print $5}')
 elif [[ $NODENAME == node* ]]; then
-    export IBDEVICES=ionic_0,ionic_1,ionic_2,ionic_3,ionic_4,ionic_5,ionic_6,ionic_7
+    #export IBDEVICES=ionic_0,ionic_1,ionic_2,ionic_3,ionic_4,ionic_5,ionic_6,ionic_7
+    export IBDEVICES=rocep9s0,rocep25s0,rocep105s0,rocep121s0,rocep137s0,rocep153s0,rocep233s0,rocep249s0
     export GLOO_SOCKET_IFNAME=enp193s0f1np1
     export NCCL_SOCKET_IFNAME=enp193s0f1np1
 elif [[ $NODENAME == mia1* ]]; then
