@@ -85,7 +85,10 @@ fi
 # entrypoint script to pin a different image for specific models.
 #export DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-1224}"
 #export DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-rocm/sgl-dev:sglang-0.5.8-rocm700-mi35x-mori-0210}"
-export DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-rocm/ali-private:sglang-0.5.8-rocm700-mi35x-mori-0210-qwen3-moe-0228}"
+#export DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-rocm/ali-private:sglang-0.5.8-rocm700-mi35x-mori-0210-qwen3-moe-0228}"
+#export DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-lmsysorg/sglang:v0.5.10rc0-rocm700-mi35x}"
+#export DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-lmsysorg/sglang-rocm:v0.5.10rc0-rocm720-mi35x-20260330}"
+export DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-lmsysorg/sglang:v0.5.9-rocm700-mi35x}"
 #export DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-rocm/sgl-dev:v0.5.8-rocm700-mi35x-20260202}"
 if test -z "${DOCKER_IMAGE_NAME}"; then
   echo "Error: DOCKER_IMAGE_NAME is not set or empty."

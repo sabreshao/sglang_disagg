@@ -63,8 +63,9 @@ set +x
 # NCCL InfiniBand HCA list — mirrors IBDEVICES for NCCL collective operations
 export NCCL_IB_HCA=$IBDEVICES
 
+#export AITER_ONLINE_TUNE=1
 # Enable AMD AITER attention backend for optimized attention kernels
-export SGLANG_USE_AITER=1
+#export SGLANG_USE_AITER=1
 
 # Disaggregation timeouts — allow up to 1200s for KV-cache bootstrap and transfer
 export SGLANG_DISAGGREGATION_BOOTSTRAP_TIMEOUT=1200

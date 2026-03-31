@@ -27,7 +27,7 @@
 # -----------------------------------------------------------------------------
 export xP=1
 export yD=1
-export NUM_NODES=3
+export NUM_NODES=2
 
 # -----------------------------------------------------------------------------
 # Model Configuration
@@ -51,8 +51,8 @@ export MODEL_DIR="/mnt/nfs/RAID/shared/huggingface/hub/"
 #                    is set equal to PREFILL_TP_SIZE. (true/false)
 # -----------------------------------------------------------------------------
 export PREFILL_TP_SIZE=8
-export PREFILL_ENABLE_EP=true
-export PREFILL_ENABLE_DP=true
+export PREFILL_ENABLE_EP=false
+export PREFILL_ENABLE_DP=false
 
 # -----------------------------------------------------------------------------
 # Parallelism Configuration (Decode)
@@ -65,9 +65,9 @@ export PREFILL_ENABLE_DP=true
 # DECODE_MTP_SIZE:  Number of speculative decoding steps (Multi-Token
 #                   Prediction). Set to 0 to disable MTP/speculative decoding.
 # -----------------------------------------------------------------------------
-export DECODE_TP_SIZE=16
-export DECODE_ENABLE_EP=true
-export DECODE_ENABLE_DP=true
+export DECODE_TP_SIZE=8
+export DECODE_ENABLE_EP=false
+export DECODE_ENABLE_DP=false
 export DECODE_MTP_SIZE=0
 
 # -----------------------------------------------------------------------------
@@ -86,7 +86,7 @@ export BENCH_INPUT_LEN=3300
 export BENCH_OUTPUT_LEN=400
 export BENCH_RANDOM_RANGE_RATIO=1
 export BENCH_NUM_PROMPTS_MULTIPLIER=10
-export BENCH_MAX_CONCURRENCY=1024
+export BENCH_MAX_CONCURRENCY=1536
 
 # -----------------------------------------------------------------------------
 # Misc Configuration
@@ -97,7 +97,7 @@ export BENCH_MAX_CONCURRENCY=1024
 # DOCKER_IMAGE_NAME: ROCm Docker image containing SGLang, AITER, MoRI, and
 #                    AINIC drivers for MI355X (GFX950) GPUs.
 # -----------------------------------------------------------------------------
-export LOAD_DUMMY=0
+export LOAD_DUMMY=1
 export DRY_RUN=0
 # export DOCKER_IMAGE_NAME=rocm/sgl-dev:sglang-0.5.8-rocm700-mi35x-mori-0210
 
