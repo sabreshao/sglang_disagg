@@ -1,0 +1,12 @@
+[33mMiniLB is only for debugging purposes, it only supports random policy![0m
+INFO:     Started server process [4266]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:30000 (Press CTRL+C to quit)
+INFO:     10.2.224.9:36212 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48474 - "GET /get_server_info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48490 - "POST /flush_cache HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48492 - "GET /metrics HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:48508 - "POST /generate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53828 - "GET /get_server_info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53842 - "GET /metrics HTTP/1.1" 404 Not Found
