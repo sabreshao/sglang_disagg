@@ -2,13 +2,16 @@
 #  QUICK START
 
 ## V3.2
-bash give_me_nodes.sh
+```
+bash give_me_nodes.sh # default reserve node04,node08
 LOAD_DUMMY=0 DEFAULT_DOCKER_IMAGE=rocm/sgl-dev:v0.5.10rc0-rocm720-mi35x-20260331 PROFILE=deepseek_v32_default bash run_pd.sh
+```
 
 ## R1
+```
 bash give_me_nodes.sh
 LOAD_DUMMY=0 DEFAULT_DOCKER_IMAGE=rocm/sgl-dev:v0.5.10rc0-rocm720-mi35x-20260331 PROFILE=deepseek_r1_default bash run_pd.sh
- 
+```
 
 
 # SGLang PD Simple
