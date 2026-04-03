@@ -1,0 +1,25 @@
+import argparse
+import socket
+import time
+
+
+def is_port_open(host, port, timeout=2):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(timeout)
+        return sock.connect_ex((host, port)) == 0
+
+
+def wait_while_port_open(host, port, check_interval=5):
+    print(f"Waiting while port {port} on {host} is open...")
+    while is_port_open(host, port):
+        time.sleep(check_interval)
+    print(f"Port {port} on {host} is now closed.")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Wait while a remote port remains open.")
+    parser.add_argument("--remote-ip", required=True, help="Remote server IP address.")
+    parser.add_argument("--remote-port", type=int, required=True, help="Remote port number.")
+    args = parser.parse_args()
+
+    wait_while_port_open(args.remote_ip, args.remote_port)
