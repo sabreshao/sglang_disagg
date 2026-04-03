@@ -64,6 +64,18 @@ docker_args=(
     -e BENCH_MAX_CONCURRENCY="${BENCH_MAX_CONCURRENCY}"
     -e BENCH_REQUEST_RATE="${BENCH_REQUEST_RATE}"
     -e BENCH_AUTO_CLAMP="${BENCH_AUTO_CLAMP}"
+    -e BENCH_MODE="${BENCH_MODE}"
+    -e BENCH_BACKEND="${BENCH_BACKEND}"
+    -e BENCH_BURSTINESS="${BENCH_BURSTINESS}"
+    -e BENCH_NUM_PROMPTS="${BENCH_NUM_PROMPTS}"
+    -e BENCH_NUM_WARMUPS="${BENCH_NUM_WARMUPS}"
+    -e BENCH_RESULT_DIR="${BENCH_RESULT_DIR}"
+    -e BENCH_RESULT_FILENAME="${BENCH_RESULT_FILENAME}"
+    -e BENCH_POISSON_USE_SLOWDOWN_PHASE_CONTROL="${BENCH_POISSON_USE_SLOWDOWN_PHASE_CONTROL:-false}"
+    -e SLOWDOWN_DURATION="${SLOWDOWN_DURATION:-}"
+    -e PREFILL_IDLE_TIMEOUT="${PREFILL_IDLE_TIMEOUT:-}"
+    -e PREFILL_IDLE_REQUEST_TIMEOUT="${PREFILL_IDLE_REQUEST_TIMEOUT:-}"
+    -e PREFILL_IDLE_POLL_INTERVAL="${PREFILL_IDLE_POLL_INTERVAL:-}"
     -e DRY_RUN="${DRY_RUN}"
     --name "${CONTAINER_NAME}"
 )
@@ -74,10 +86,23 @@ fi
 
 echo "Rank ${SLURM_PROCID} on $(hostname) -> ${CONTAINER_NAME}"
 
-exec sudo docker run \
+cleanup() {
+    sudo docker stop "${CONTAINER_NAME}" >/dev/null 2>&1 || true
+}
+
+trap cleanup EXIT INT TERM
+
+sudo docker run -d \
     "${docker_args[@]}" \
     "${DOCKER_IMAGE_NAME}" \
-    bash -lc '
-        mkdir -p /run_logs/slurm_job-${SLURM_JOB_ID}
-        bash '"${SGL_WS_PATH}"'/scripts/pd_server.sh 2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/pd_server_NODE${NODE_RANK}.log
-    '
+    bash -lc 'trap "exit 0" TERM INT; while true; do sleep 3600; done' >/dev/null
+
+if [[ "${RESTART_CONTAINER_BEFORE_SERVER:-1}" == "1" ]]; then
+    echo "Restarting container ${CONTAINER_NAME} before launching pd_server.sh"
+    sudo docker restart "${CONTAINER_NAME}" >/dev/null
+fi
+
+sudo docker exec "${CONTAINER_NAME}" bash -lc '
+    mkdir -p /run_logs/slurm_job-${SLURM_JOB_ID}
+    bash '"${SGL_WS_PATH}"'/scripts/pd_server.sh 2>&1 | tee /run_logs/slurm_job-${SLURM_JOB_ID}/pd_server_NODE${NODE_RANK}.log
+'

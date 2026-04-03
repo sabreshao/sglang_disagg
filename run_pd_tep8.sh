@@ -3,8 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 PROFILE="${PROFILE:-deepseek_v32_default}"
-DEFAULT_DOCKER_IMAGE="${DEFAULT_DOCKER_IMAGE:-rocm/sgl-dev:sglang-0.5.8-rocm700-mi35x-mori-0210}"
-
+DEFAULT_DOCKER_IMAGE="${DEFAULT_DOCKER_IMAGE:-rocm/sgl-dev:v0.5.10rc0-rocm720-mi35x-20260331}"
 case "${PROFILE}" in
     deepseek_v32_default)
         default_model_name="DeepSeek-V3.2"
@@ -12,15 +11,15 @@ case "${PROFILE}" in
         default_xp=1
         default_yd=1
         default_prefill_tp=8
-        default_prefill_ep=false
+        default_prefill_ep=true
         default_prefill_dp=false
         default_decode_tp=8
-        default_decode_ep=false
+        default_decode_ep=true
         default_decode_dp=false
         default_decode_mtp=0
-        default_bench_input=3300
-        default_bench_output=400
-        default_bench_concurrency=256
+        default_bench_input=102400
+        default_bench_output=1024
+        default_bench_concurrency=128
         ;;
     deepseek_v32_recommended)
         default_model_name="DeepSeek-V3.2"
@@ -34,9 +33,9 @@ case "${PROFILE}" in
         default_decode_ep=false
         default_decode_dp=true
         default_decode_mtp=0
-        default_bench_input=3300
-        default_bench_output=400
-        default_bench_concurrency=512
+        default_bench_input=102400
+        default_bench_output=1024
+        default_bench_concurrency=128
         ;;
     deepseek_r1_default)
         default_model_name="DeepSeek-R1"
@@ -44,19 +43,35 @@ case "${PROFILE}" in
         default_xp=1
         default_yd=1
         default_prefill_tp=8
-        default_prefill_ep=false
+        default_prefill_ep=true
         default_prefill_dp=false
         default_decode_tp=8
-        default_decode_ep=false
+        default_decode_ep=true
         default_decode_dp=false
         default_decode_mtp=0
-        default_bench_input=3300
-        default_bench_output=400
-        default_bench_concurrency=1536
+        default_bench_input=102400
+        default_bench_output=1024
+        default_bench_concurrency=128
+        ;;
+    deepseek_v32_fp4_default)
+        default_model_name="DeepSeek-V3.2-mxfp4"
+        default_docker_image="${DEFAULT_DOCKER_IMAGE}"
+        default_xp=1
+        default_yd=1
+        default_prefill_tp=8
+        default_prefill_ep=true
+        default_prefill_dp=false
+        default_decode_tp=8
+        default_decode_ep=true
+        default_decode_dp=false
+        default_decode_mtp=0
+        default_bench_input=61440
+        default_bench_output=1024
+        default_bench_concurrency=8
         ;;
     *)
         echo "Unsupported PROFILE: ${PROFILE}" >&2
-        echo "Supported profiles: deepseek_v32_default, deepseek_v32_recommended, deepseek_r1_default" >&2
+        echo "Supported profiles: deepseek_v32_default, deepseek_v32_recommended, deepseek_r1_default, deepseek_v32_fp4_default" >&2
         exit 1
         ;;
 esac
@@ -91,6 +106,11 @@ export BENCH_NUM_PROMPTS="${BENCH_NUM_PROMPTS:-}"
 export BENCH_NUM_WARMUPS="${BENCH_NUM_WARMUPS:-}"
 export BENCH_RESULT_DIR="${BENCH_RESULT_DIR:-}"
 export BENCH_RESULT_FILENAME="${BENCH_RESULT_FILENAME:-}"
+export BENCH_POISSON_USE_SLOWDOWN_PHASE_CONTROL="${BENCH_POISSON_USE_SLOWDOWN_PHASE_CONTROL:-false}"
+export SLOWDOWN_DURATION="${SLOWDOWN_DURATION:-60}"
+export PREFILL_IDLE_TIMEOUT="${PREFILL_IDLE_TIMEOUT:-1200}"
+export PREFILL_IDLE_REQUEST_TIMEOUT="${PREFILL_IDLE_REQUEST_TIMEOUT:-30}"
+export PREFILL_IDLE_POLL_INTERVAL="${PREFILL_IDLE_POLL_INTERVAL:-5}"
 
 export LOAD_DUMMY="${LOAD_DUMMY:-1}"
 export DRY_RUN="${DRY_RUN:-0}"

@@ -86,12 +86,18 @@ def main():
                 sys.exit(0)
 
             busy_summary = ", ".join(
-                f"dp_rank={r['dp_rank']} running={r['num_running_reqs']} waiting={r['num_waiting_reqs']}"
-                for r in sorted(busy_ranks, key=lambda x: x["dp_rank"])
+                f"dp_rank={r.get('dp_rank', 'unknown')} "
+                f"running={r.get('num_running_reqs', 0)} "
+                f"waiting={r.get('num_waiting_reqs', 0)}"
+                for r in sorted(
+                    busy_ranks,
+                    key=lambda x: (x.get("dp_rank") is None, x.get("dp_rank", -1)),
+                )
             )
             print(f"[{time.strftime('%H:%M:%S')}] Still busy: {busy_summary}")
 
-        except (urllib.error.URLError, TimeoutError, socket.timeout) as e:
+        except (urllib.error.URLError, TimeoutError, socket.timeout, KeyError,
+                TypeError) as e:
             print(f"[{time.strftime('%H:%M:%S')}] Request failed: {e}")
         except (json.JSONDecodeError, KeyError) as e:
             print(f"[{time.strftime('%H:%M:%S')}] Bad response: {e}")

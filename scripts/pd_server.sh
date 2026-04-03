@@ -28,6 +28,13 @@ BENCH_NUM_PROMPTS_MULTIPLIER="${BENCH_NUM_PROMPTS_MULTIPLIER:-10}"
 BENCH_MAX_CONCURRENCY="${BENCH_MAX_CONCURRENCY:-512}"
 BENCH_REQUEST_RATE="${BENCH_REQUEST_RATE:-inf}"
 BENCH_AUTO_CLAMP="${BENCH_AUTO_CLAMP:-true}"
+BENCH_MODE="${BENCH_MODE:-slowdown}"
+BENCH_BACKEND="${BENCH_BACKEND:-sglang}"
+BENCH_BURSTINESS="${BENCH_BURSTINESS:-1.0}"
+BENCH_NUM_PROMPTS="${BENCH_NUM_PROMPTS:-}"
+BENCH_NUM_WARMUPS="${BENCH_NUM_WARMUPS:-}"
+BENCH_RESULT_DIR="${BENCH_RESULT_DIR:-}"
+BENCH_RESULT_FILENAME="${BENCH_RESULT_FILENAME:-}"
 LOAD_DUMMY="${LOAD_DUMMY:-0}"
 DRY_RUN="${DRY_RUN:-0}"
 
@@ -78,7 +85,7 @@ trim_spaces() {
 
 model_supported() {
     case "$1" in
-        DeepSeek-V3.2|DeepSeek-R1) return 0 ;;
+        DeepSeek-V3.2|DeepSeek-V3.2-mxfp4|DeepSeek-R1) return 0 ;;
         *) return 1 ;;
     esac
 }
@@ -90,15 +97,15 @@ fi
 
 build_model_base_config() {
     case "$1" in
-        DeepSeek-V3.2)
-            echo "--decode-log-interval 1 --watchdog-timeout 3600 --load-balance-method round_robin --attention-backend nsa --nsa-prefill-backend tilelang --nsa-decode-backend tilelang --disaggregation-transfer-backend mori"
+        DeepSeek-V3.2|DeepSeek-V3.2-mxfp4)
+            echo "--decode-log-interval 1 --watchdog-timeout 3600 --load-balance-method round_robin --attention-backend nsa --nsa-prefill-backend tilelang --nsa-decode-backend tilelang --disaggregation-transfer-backend mori  --kv-cache-dtype fp8_e4m3 --enable-dp-attention --enable-dp-lm-head  --moe-dense-tp-size 1 --eplb-algorithm deepseek --deepep-mode low_latency   --disable-radix-cache   --ep-dispatch-algorithm dynamic"
             ;;
         DeepSeek-R1)
-            echo "--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm static --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori"
+            echo "--decode-log-interval 1 --watchdog-timeout 3600 --ep-dispatch-algorithm static --load-balance-method round_robin --kv-cache-dtype fp8_e4m3 --attention-backend aiter --disaggregation-transfer-backend mori  --kv-cache-dtype fp8_e4m3 "
             ;;
     esac
 }
-
+# --kv-cache-dtype fp8_e4m3
 build_model_mtp_config() {
     local model_name="$1"
     local mtp_size="$2"
@@ -108,7 +115,7 @@ build_model_mtp_config() {
     fi
 
     case "${model_name}" in
-        DeepSeek-V3.2)
+        DeepSeek-V3.2|DeepSeek-V3.2-mxfp4)
             echo "--speculative-algorithm EAGLE --speculative-num-steps ${mtp_size} --speculative-eagle-topk 1 --speculative-num-draft-tokens $((mtp_size + 1))"
             ;;
         DeepSeek-R1)
@@ -119,7 +126,7 @@ build_model_mtp_config() {
 
 build_model_dp_config() {
     case "$1" in
-        DeepSeek-V3.2|DeepSeek-R1)
+        DeepSeek-V3.2|DeepSeek-V3.2-mxfp4|DeepSeek-R1)
             echo "--moe-a2a-backend mori --enable-dp-attention --moe-dense-tp-size 1 --enable-dp-lm-head"
             ;;
     esac
@@ -176,7 +183,7 @@ export EFFECTIVE_BENCH_MAX_CONCURRENCY
 
 build_model_prefill_config() {
     case "$1" in
-        DeepSeek-V3.2)
+        DeepSeek-V3.2|DeepSeek-V3.2-mxfp4)
             echo "--mem-fraction-static 0.8 --max-running-requests ${prefill_max_running_requests} --chunked-prefill-size ${prefill_chunked_prefill_size} --cuda-graph-bs ${prefill_cuda_graph_bs} --disable-radix-cache"
             ;;
         DeepSeek-R1)
@@ -187,8 +194,8 @@ build_model_prefill_config() {
 
 build_model_decode_config() {
     case "$1" in
-        DeepSeek-V3.2)
-            echo "--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs ${decode_cuda_graph_bs} --prefill-round-robin-balance"
+        DeepSeek-V3.2|DeepSeek-V3.2-mxfp4)
+            echo "--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size} --cuda-graph-bs 256 --prefill-round-robin-balance"
             ;;
         DeepSeek-R1)
             echo "--mem-fraction-static 0.85 --max-running-requests ${decode_max_running_requests} --chunked-prefill-size ${decode_chunked_prefill_size}  --prefill-round-robin-balance"
@@ -243,7 +250,7 @@ print_launch_details() {
     echo "Model               : ${MODEL_DIR}/${MODEL_NAME}"
     echo "Topology            : xP=${xP}, yD=${yD}, IPADDRS=${IPADDRS}"
     echo "Parallelism         : PREFILL_TP=${PREFILL_TP_SIZE}, PREFILL_EP=${PREFILL_ENABLE_EP}, PREFILL_DP=${PREFILL_ENABLE_DP}, DECODE_TP=${DECODE_TP_SIZE}, DECODE_EP=${DECODE_ENABLE_EP}, DECODE_DP=${DECODE_ENABLE_DP}, DECODE_MTP=${DECODE_MTP_SIZE}"
-    echo "Benchmark           : requested_concurrency=${BENCH_MAX_CONCURRENCY}, effective_concurrency=${EFFECTIVE_BENCH_MAX_CONCURRENCY}, request_rate=${BENCH_REQUEST_RATE}"
+    echo "Benchmark           : mode=${BENCH_MODE}, requested_concurrency=${BENCH_MAX_CONCURRENCY}, effective_concurrency=${EFFECTIVE_BENCH_MAX_CONCURRENCY}, request_rate=${BENCH_REQUEST_RATE}, burstiness=${BENCH_BURSTINESS}"
     echo "Network             : IBDEVICES=${IBDEVICES}, GLOO_SOCKET_IFNAME=${GLOO_SOCKET_IFNAME}, NCCL_SOCKET_IFNAME=${NCCL_SOCKET_IFNAME}, SGLANG_HOST_IP=${SGLANG_HOST_IP}"
     echo "MORI                : DISPATCH_TOKENS=${dispatch_tokens}, MORI_SHMEM_MODE=${MORI_SHMEM_MODE:-unset}, MORI_RDMA_TC=${MORI_RDMA_TC:-unset}, MORI_RDMA_SL=${MORI_RDMA_SL:-unset}"
     echo "Python Path         : ${PYTHONPATH:-unset}"
@@ -328,8 +335,19 @@ if [[ "${NODE_RANK}" -eq 0 ]]; then
     export DECODE_HEAD_NODE="${IP_ARRAY[$NODE_OFFSET]}"
     export PREFILL_HEAD_NODE="${IP_ARRAY[0]}"
     export MAX_RUNNING_REQUESTS_THRESHOLD="${decode_max_running_requests}"
+    export ROUTER_NODE="localhost"
 
-    BENCH_CMD="bash ${SGL_WS_PATH}/scripts/bench_throughput_with_slow_down.sh ${xP} ${yD} $((PREFILL_TP_SIZE * xP)) $((DECODE_TP_SIZE * yD)) ${MODEL_DIR} ${MODEL_NAME} /run_logs/slurm_job-${SLURM_JOB_ID} ${BENCH_INPUT_LEN} ${BENCH_OUTPUT_LEN} ${EFFECTIVE_BENCH_MAX_CONCURRENCY} ${BENCH_REQUEST_RATE} ${BENCH_RANDOM_RANGE_RATIO} ${BENCH_NUM_PROMPTS_MULTIPLIER}"
+    if [[ "${BENCH_MODE}" == "poisson" ]]; then
+        if [[ -z "${BENCH_RESULT_DIR}" ]]; then
+            export BENCH_RESULT_DIR="/run_logs/slurm_job-${SLURM_JOB_ID}"
+        fi
+        if [[ -z "${BENCH_RESULT_FILENAME}" ]]; then
+            export BENCH_RESULT_FILENAME="poisson_${MODEL_NAME}_slurm_job_${SLURM_JOB_ID}.json"
+        fi
+        BENCH_CMD="bash ${SGL_WS_PATH}/scripts/bench_poisson_serving.sh ${MODEL_DIR} ${MODEL_NAME} /run_logs/slurm_job-${SLURM_JOB_ID} ${BENCH_INPUT_LEN} ${BENCH_OUTPUT_LEN} ${EFFECTIVE_BENCH_MAX_CONCURRENCY} ${BENCH_REQUEST_RATE} ${BENCH_RANDOM_RANGE_RATIO} ${BENCH_NUM_PROMPTS_MULTIPLIER}"
+    else
+        BENCH_CMD="bash ${SGL_WS_PATH}/scripts/bench_throughput_with_slow_down.sh ${xP} ${yD} $((PREFILL_TP_SIZE * xP)) $((DECODE_TP_SIZE * yD)) ${MODEL_DIR} ${MODEL_NAME} /run_logs/slurm_job-${SLURM_JOB_ID} ${BENCH_INPUT_LEN} ${BENCH_OUTPUT_LEN} ${EFFECTIVE_BENCH_MAX_CONCURRENCY} ${BENCH_REQUEST_RATE} ${BENCH_RANDOM_RANGE_RATIO} ${BENCH_NUM_PROMPTS_MULTIPLIER}"
+    fi
     if [[ "${DRY_RUN}" -eq 1 ]]; then
         echo "DRY RUN: ${BENCH_CMD}"
     else
@@ -400,16 +418,20 @@ else
             cp /run_logs/slurm_job-${SLURM_JOB_ID}/* "${SGL_WS_PATH}/logs/slurm_job-${SLURM_JOB_ID}/" || true
         fi
 
-        if result=$(python "${SGL_WS_PATH}/utils/parse_decode_log.py" "/run_logs/slurm_job-${SLURM_JOB_ID}/decode_NODE${NODE_RANK}.log" "${BENCH_OUTPUT_LEN}" "${EFFECTIVE_BENCH_MAX_CONCURRENCY}"); then
-            tpot=$(echo "${result}" | sed -n '1p')
-            output_throughput=$(echo "${result}" | sed -n '2p')
-            echo "Batch size = ${EFFECTIVE_BENCH_MAX_CONCURRENCY}"
-            echo "Input len  = ${BENCH_INPUT_LEN}"
-            echo "Output len = ${BENCH_OUTPUT_LEN}"
-            echo "TPOT       = ${tpot} ms"
-            echo "Output throughput = ${output_throughput} tokens/s"
+        if [[ "${BENCH_MODE}" == "slowdown" ]]; then
+            if result=$(python "${SGL_WS_PATH}/utils/parse_decode_log.py" "/run_logs/slurm_job-${SLURM_JOB_ID}/decode_NODE${NODE_RANK}.log" "${BENCH_OUTPUT_LEN}" "${EFFECTIVE_BENCH_MAX_CONCURRENCY}"); then
+                tpot=$(echo "${result}" | sed -n '1p')
+                output_throughput=$(echo "${result}" | sed -n '2p')
+                echo "Batch size = ${EFFECTIVE_BENCH_MAX_CONCURRENCY}"
+                echo "Input len  = ${BENCH_INPUT_LEN}"
+                echo "Output len = ${BENCH_OUTPUT_LEN}"
+                echo "TPOT       = ${tpot} ms"
+                echo "Output throughput = ${output_throughput} tokens/s"
+            else
+                echo "Decode log metrics are invalid; see stderr above."
+            fi
         else
-            echo "Decode log metrics are invalid; see stderr above."
+            echo "Poisson benchmark result file: ${BENCH_RESULT_DIR}/${BENCH_RESULT_FILENAME}"
         fi
     fi
 fi

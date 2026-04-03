@@ -1,19 +1,3 @@
-
-#  QUICK START
-
-## V3.2
-```
-bash give_me_nodes.sh # default reserve node04,node08
-LOAD_DUMMY=0 DEFAULT_DOCKER_IMAGE=rocm/sgl-dev:v0.5.10rc0-rocm720-mi35x-20260331 PROFILE=deepseek_v32_default bash run_pd.sh
-```
-
-## R1
-```
-bash give_me_nodes.sh
-LOAD_DUMMY=0 DEFAULT_DOCKER_IMAGE=rocm/sgl-dev:v0.5.10rc0-rocm720-mi35x-20260331 PROFILE=deepseek_r1_default bash run_pd.sh
-```
-
-
 # SGLang PD Simple
 
 Simplified prefill/decode disaggregation launcher for AMD MI355X clusters.
@@ -54,6 +38,37 @@ PROFILE=deepseek_v32_default bash run_pd.sh
 - `LOAD_DUMMY`
 - `WORKSPACE_SGLANG_DIR`
 
+## Benchmark modes
+
+Two benchmark modes are supported:
+
+- `BENCH_MODE=slowdown`
+- `BENCH_MODE=poisson`
+
+### `BENCH_MODE=slowdown`
+
+- Keeps the current `slow_down` coordination flow.
+- Uses `scripts/bench_throughput_with_slow_down.sh`.
+- Final `TPOT` and `Output throughput` are parsed from decode logs.
+
+### `BENCH_MODE=poisson`
+
+- Uses `bench_serving/benchmark_serving.py`.
+- Sends requests with a configurable arrival process.
+- `BENCH_REQUEST_RATE=inf` means send all requests immediately.
+- `BENCH_BURSTINESS=1.0` means Poisson arrival.
+- Results are written to a JSON file instead of using decode-log parsing.
+
+Relevant poisson variables:
+
+- `BENCH_BACKEND`
+- `BENCH_REQUEST_RATE`
+- `BENCH_BURSTINESS`
+- `BENCH_NUM_PROMPTS`
+- `BENCH_NUM_WARMUPS`
+- `BENCH_RESULT_DIR`
+- `BENCH_RESULT_FILENAME`
+
 ## Source selection rule
 
 At runtime the container follows one rule only:
@@ -66,10 +81,30 @@ This avoids namespace-package and mixed-source ambiguity.
 
 ## Benchmark behavior
 
-- The benchmark still uses the `slow_down` method.
+- Slowdown mode uses the `slow_down` method.
+- Poisson mode uses `bench_serving/benchmark_serving.py`.
 - If requested concurrency exceeds decode `max-running-requests`, it is clamped by default.
 - Effective concurrency is printed in launch logs.
-- Decode metrics are parsed from decode logs and rejected when timestamps are invalid.
+- Decode metrics are only parsed in slowdown mode and are rejected when timestamps are invalid.
+
+### Example
+
+Slowdown benchmark:
+
+```bash
+PROFILE=deepseek_v32_default BENCH_MODE=slowdown bash run_pd.sh
+```
+
+Poisson benchmark:
+
+```bash
+PROFILE=deepseek_v32_default \
+BENCH_MODE=poisson \
+BENCH_REQUEST_RATE=4 \
+BENCH_BURSTINESS=1.0 \
+BENCH_NUM_PROMPTS=2560 \
+bash run_pd.sh
+```
 
 ## Logs
 
